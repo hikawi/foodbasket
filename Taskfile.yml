@@ -1,0 +1,60 @@
+version: "3"
+
+vars:
+  FRONTENDS: frontend-home frontend-pos frontend-admin frontend-tenant
+
+tasks:
+  # --- Setup Tasks ---
+  install:
+    desc: Install all dependencies for Go and Vue
+    cmds:
+      - go mod download
+      - for: { var: FRONTENDS }
+        cmd: cd apps/{{.ITEM}} && pnpm install
+
+  format:frontends:
+    desc: Format all Node projects
+    cmds:
+      - for: { var: FRONTENDS }
+        cmd: cd apps/{{.ITEM}} && pnpm format
+
+  # --- Infrastructure ---
+  infra:
+    desc: Start Docker containers (DB, Redis, Mailpit, etc.)
+    cmds:
+      - docker compose up -d
+
+  infra:down:
+    desc: Drop Docker containers
+    cmds:
+      - docker compose down
+
+  infra:kill:
+    desc: Destroy all Docker containers and volumes
+    cmds:
+      - docker compose down -v
+
+  # --- Development ---
+  dev:
+    desc: Start all services natively with hot-reload
+    deps: [infra]
+    cmds:
+      - task: dev:backend
+      - task: dev:frontends
+
+  dev:backend:
+    dir: apps/backend
+    cmds:
+      - air
+
+  dev:frontends:
+    desc: Start all Vue apps in parallel
+    deps: [install]
+    cmds:
+      - pnpm -r --parallel dev
+
+  # --- Build & Types ---
+  generate:
+    desc: Run sqlc and generate types
+    cmds:
+      - sqlc generate
