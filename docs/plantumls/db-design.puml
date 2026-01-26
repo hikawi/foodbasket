@@ -1,0 +1,62 @@
+@startuml
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam dpi 150
+
+entity User {
+  * id: UUID
+  ---
+  name
+  email
+  created_at
+  updated_at
+  deleted_at
+}
+
+entity Tenant {
+  * id: UUID
+  ---
+  name
+  created_at
+  updated_at
+  deleted_at
+}
+
+entity Role {
+  * id: UUID
+  ---
+  name
+  tenant_id <<FK>>
+  created_at
+  updated_at
+  deleted_at
+}
+
+entity UserRole {
+  * user_id: UUID <<FK>>
+  * role_id: UUID <<FK>>
+  ---
+}
+
+entity Permission {
+  * id: string
+  ---
+  created_at
+  updated_at
+  deleted_at
+}
+
+entity RolePermission {
+  * role_id: UUID <<FK>>
+  * permission_id: string <<FK>>
+}
+
+Role ||--o{ RolePermission : assigns >
+Permission ||--o{ RolePermission : granted to >
+Tenant ||--o{ Role: has >
+User ||--o{ UserRole
+Role ||--o{ UserRole
+
+@enduml
+

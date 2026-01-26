@@ -1,0 +1,11 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "queries/"
+    schema: "schema.sql"
+    gen:
+      go:
+        package: "postgres"
+        out: "internal/postgres"
+        sql_package: "pgx/v5"
+        emit_interface: true
