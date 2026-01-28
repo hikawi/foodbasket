@@ -7,10 +7,38 @@ package postgres
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createUser = `-- name: CreateUser :one
+INSERT INTO users (name, email, password) VALUES ($1, $2, $3)
+RETURNING id, name, email, password, created_at, updated_at, deleted_at
+`
+
+type CreateUserParams struct {
+	Name     string
+	Email    string
+	Password pgtype.Text
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, createUser, arg.Name, arg.Email, arg.Password)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Password,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, email, created_at, updated_at, deleted_at FROM users
+SELECT id, name, email, password, created_at, updated_at, deleted_at FROM users
 WHERE email = $1 AND deleted_at IS NULL LIMIT 1
 `
 
@@ -21,6 +49,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.ID,
 		&i.Name,
 		&i.Email,
+		&i.Password,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
