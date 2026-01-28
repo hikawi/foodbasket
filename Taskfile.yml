@@ -3,6 +3,10 @@ version: "3"
 vars:
   FRONTENDS: frontend-home frontend-pos frontend-admin frontend-tenant
 
+dotenv:
+  - .env
+  - .env.example
+
 tasks:
   # --- Setup Tasks ---
   install:
@@ -37,10 +41,7 @@ tasks:
   # --- Development ---
   dev:
     desc: Start all services natively with hot-reload
-    deps: [infra]
-    cmds:
-      - task: dev:backend
-      - task: dev:frontends
+    deps: [infra, dev:backend, dev:frontends]
 
   dev:backend:
     dir: apps/backend

@@ -1,9 +1,9 @@
+// Package services provides a set of injectable interfaces
+// for decoupling logic and easier mocking
 package services
 
-type IUserService interface {
-	CheckUserCredentials(email, password string) bool
-}
-
 type ServiceRegistry struct {
-	UserService *IUserService
+	RandomService   IRandomService
+	UserService     IUserService
+	PasswordService IPasswordService
 }

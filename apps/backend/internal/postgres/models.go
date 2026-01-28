@@ -42,6 +42,7 @@ type User struct {
 	ID        pgtype.UUID
 	Name      string
 	Email     string
+	Password  pgtype.Text
 	CreatedAt pgtype.Timestamptz
 	UpdatedAt pgtype.Timestamptz
 	DeletedAt pgtype.Timestamptz
