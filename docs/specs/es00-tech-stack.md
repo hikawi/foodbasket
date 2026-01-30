@@ -3,7 +3,7 @@ title: ES00 - Tech Stack
 parent: Product & Engineering Specifications
 ---
 
-# ES00: Tech Stack
+# ES00 - Tech Stack
 
 ## Summary
 
