@@ -5,6 +5,8 @@ volumes:
     name: foodbasket-postgres-data
   rustfs-data:
     name: foodbasket-rustfs-data
+  valkey-data:
+    name: foodbasket-valkey-data
 
 networks:
   internal:
@@ -12,6 +14,17 @@ networks:
     driver: bridge
 
 services:
+  valkey:
+    image: valkey/valkey:9-alpine
+    container_name: foodbasket-valkey
+    hostname: valkey
+    networks:
+      - default
+    volumes:
+      - valkey-data:/data
+    ports:
+      - 6379:6379
+
   postgres:
     image: postgres:18-alpine
     container_name: foodbasket-postgres
