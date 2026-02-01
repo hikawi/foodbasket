@@ -38,6 +38,12 @@ tasks:
     cmds:
       - docker compose down -v
 
+  # --- Testing ---
+  test:backend:
+    dir: apps/backend
+    cmds:
+      - go test ./... -cover
+
   # --- Development ---
   dev:
     desc: Start all services natively with hot-reload
@@ -57,5 +63,6 @@ tasks:
   # --- Build & Types ---
   generate:
     desc: Run sqlc and generate types
+    dir: apps/backend
     cmds:
       - sqlc generate
