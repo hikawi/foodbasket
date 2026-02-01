@@ -38,6 +38,12 @@ tasks:
     cmds:
       - docker compose down -v
 
+  # --- Linting ---
+  lint:backend:
+    dir: apps/backend
+    cmds:
+      - golangci-lint run
+
   # --- Testing ---
   test:backend:
     dir: apps/backend

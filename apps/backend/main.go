@@ -30,13 +30,15 @@ func setupServices(q postgres.Querier, valkeyClient valkey.Client) services.Serv
 	userService := services.NewUserService(q, passwordService)
 	valkeyService := services.NewValkeyService(valkeyClient)
 	sessionService := services.NewSessionService(valkeyService, randomService)
+	permissionService := services.NewPermissionService(q, valkeyService)
 
 	return services.ServiceRegistry{
-		RandomService:   randomService,
-		UserService:     userService,
-		PasswordService: passwordService,
-		ValkeyService:   valkeyService,
-		SessionService:  sessionService,
+		RandomService:     randomService,
+		UserService:       userService,
+		PasswordService:   passwordService,
+		ValkeyService:     valkeyService,
+		SessionService:    sessionService,
+		PermissionService: permissionService,
 	}
 }
 

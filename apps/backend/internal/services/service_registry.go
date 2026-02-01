@@ -3,9 +3,10 @@
 package services
 
 type ServiceRegistry struct {
-	RandomService   IRandomService
-	UserService     IUserService
-	PasswordService IPasswordService
-	ValkeyService   IValkeyService
-	SessionService  ISessionService
+	RandomService     IRandomService
+	UserService       IUserService
+	PasswordService   IPasswordService
+	ValkeyService     IValkeyService
+	SessionService    ISessionService
+	PermissionService IPermissionService
 }

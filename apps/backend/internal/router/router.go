@@ -33,7 +33,12 @@ func SetupServer(serviceRegistry services.ServiceRegistry) *echo.Echo {
 }
 
 func SetupRoutes(e *echo.Group, cfg app.AppConfig, serviceRegistry services.ServiceRegistry) {
-	authHandler := handler.NewAuthHandler(serviceRegistry.UserService, serviceRegistry.SessionService)
+	authHandler := handler.NewAuthHandler(
+		serviceRegistry.UserService,
+		serviceRegistry.SessionService,
+		cfg.CookieDomain,
+		cfg.CookieSecure,
+	)
 	authHandler.SetupRoutes(e)
 
 	healthHandler := handler.NewHealthHandler()

@@ -5,7 +5,9 @@ package constants
 import "time"
 
 const (
-	CookieNameSessionID      = "foodbasket_sessionid"
+	CookieNameSessionID = "foodbasket_sessionid"
+	CookieSessionTTL    = 60 * time.Minute
+
 	ValkeySessionPrefix      = "foodbasket:auth:sess:" // foodbasket:auth:sess:<session_id>
 	ValkeyUserIndexPrefix    = "foodbasket:auth:uidx:" // foodbasket:auth:uidx:<user_id>
 	ValkeyRegistryTenantsKey = "foodbasket:registry:tenants"
