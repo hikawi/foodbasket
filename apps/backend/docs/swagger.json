@@ -1,0 +1,87 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Backend documentation for FoodBasket platform.",
+        "title": "FoodBasket",
+        "contact": {
+            "name": "Nguyệt Ánh",
+            "url": "https://www.luny.dev",
+            "email": "hello@luny.dev"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "basePath": "/v1",
+    "paths": {
+        "/auth/login": {
+            "post": {
+                "description": "Logins to an existing account if there is an account with that specific credentials.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authentication"
+                ],
+                "summary": "Logins to an existing account.",
+                "responses": {}
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "description": "Creates a user account within the system. This registration does not create a new tenant.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authentication"
+                ],
+                "summary": "Registers an account.",
+                "parameters": [
+                    {
+                        "description": "Body credentials",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PostRegisterBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "40": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.PostRegisterBody": {
+            "type": "object",
+            "required": [
+                "email",
+                "name",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 2
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 8
+                }
+            }
+        }
+    }
+}

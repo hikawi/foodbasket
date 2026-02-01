@@ -10,10 +10,12 @@ import (
 
 type IUserService interface {
 	// CheckUserCredentials checks an account associated with the email if it has a password.
+	// The password passed in is not hashed, but will be checked against a hash.
 	CheckUserCredentials(ctx context.Context, email, password string) (bool, error)
 
 	// RegisterUser registers a new user in the database.
-	RegisterUser(ctx context.Context, name, email, password string) error
+	// The password passed in is hashed inside this function.
+	RegisterUser(ctx context.Context, name, email, password string) (postgres.User, error)
 }
 
 type UserService struct {
@@ -37,13 +39,13 @@ func (s *UserService) CheckUserCredentials(ctx context.Context, email, password 
 	return s.passwordService.VerifyPassword(user.Password.String, password)
 }
 
-func (s *UserService) RegisterUser(ctx context.Context, name, email, password string) error {
+func (s *UserService) RegisterUser(ctx context.Context, name, email, password string) (postgres.User, error) {
 	hashedPassword, err := s.passwordService.HashPassword(password)
 	if err != nil {
-		return err
+		return postgres.User{}, err
 	}
 
-	_, err = s.q.CreateUser(ctx, postgres.CreateUserParams{
+	return s.q.CreateUser(ctx, postgres.CreateUserParams{
 		Name:  name,
 		Email: email,
 		Password: pgtype.Text{
@@ -51,5 +53,4 @@ func (s *UserService) RegisterUser(ctx context.Context, name, email, password st
 			Valid:  true,
 		},
 	})
-	return err
 }

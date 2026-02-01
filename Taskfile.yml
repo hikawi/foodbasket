@@ -52,7 +52,7 @@ tasks:
     desc: Start all Vue apps in parallel
     deps: [install]
     cmds:
-      - pnpm -r --parallel dev
+      - pnpm -r --parallel dev --host
 
   # --- Build & Types ---
   generate:

@@ -75,7 +75,7 @@ the following requirements:
    data yet. This may be reiterated once we start the use case for anonymous
    ordering, such as reservations, orders, or QR menus.
 7. Logging out should instantly revoke the session ID.
-8. Each session rotation should provide a grace period of 5 minutes, with a key,
+8. Each session rotation should provide a grace period of 30 seconds, with a key,
    like `rotated_to` to allow in-flight requests to still be valid for a short while.
 
 ### Authentication Context

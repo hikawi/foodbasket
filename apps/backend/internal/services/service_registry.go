@@ -6,4 +6,6 @@ type ServiceRegistry struct {
 	RandomService   IRandomService
 	UserService     IUserService
 	PasswordService IPasswordService
+	ValkeyService   IValkeyService
+	SessionService  ISessionService
 }
