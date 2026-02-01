@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v5"
+	"luny.dev/foodbasket/internal/constants"
 	"luny.dev/foodbasket/internal/dto"
 	"luny.dev/foodbasket/internal/logging"
 	"luny.dev/foodbasket/internal/services"
@@ -14,15 +15,21 @@ import (
 type AuthHandler struct {
 	userService    services.IUserService
 	sessionService services.ISessionService
+	cookieDomain   string
+	cookieSecure   bool
 }
 
 func NewAuthHandler(
 	userService services.IUserService,
 	sessionService services.ISessionService,
+	cookieDomain string,
+	cookieSecure bool,
 ) *AuthHandler {
 	return &AuthHandler{
 		userService,
 		sessionService,
+		cookieDomain,
+		cookieSecure,
 	}
 }
 
@@ -64,6 +71,7 @@ func (h *AuthHandler) postLogin(c *echo.Context) error {
 // @accept			json
 // @param			body	body	dto.PostRegisterBody	true	"Body credentials"
 // @router			/auth/register [post]
+// @success 201 "Successfully created a new account"
 // @failure		400	"Bad request"
 // @failure		500 "Couldn't register a new user"
 func (h *AuthHandler) postRegister(c *echo.Context) error {
@@ -93,16 +101,23 @@ func (h *AuthHandler) postRegister(c *echo.Context) error {
 	userID := user.ID.String()
 	userName := user.Name
 
-	_, err = h.sessionService.CreateSession(ctx, services.SessionData{
+	sessionID, err := h.sessionService.CreateSession(ctx, services.SessionData{
 		UserID:    &userID,
 		Email:     &userName,
 		IsGuest:   false,
 		CreatedAt: time.Now(),
 	})
+	if err != nil {
+		return echo.ErrInternalServerError.Wrap(err)
+	}
 
 	c.SetCookie(&http.Cookie{
-		Name: "",
+		Name:     constants.CookieNameSessionID,
+		Value:    sessionID,
+		Domain:   h.cookieDomain,
+		Expires:  time.Now().Add(constants.CookieSessionTTL),
+		HttpOnly: true,
+		Secure:   h.cookieSecure,
 	})
-
-	return c.JSON(http.StatusOK, map[string]any{"hello": "world"})
+	return c.JSON(http.StatusCreated, map[string]any{"user_id": userID})
 }

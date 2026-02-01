@@ -58,7 +58,10 @@ func (s *SessionService) GetSession(ctx context.Context, sessionID string) (*Ses
 	}
 
 	// Slide the expiration up
-	go s.valkeyService.SetXx(ctx, key, val, constants.ValkeySessionTTL)
+	// This is it so it satisfies the linter
+	go func() {
+		_ = s.valkeyService.SetXx(ctx, key, val, constants.ValkeySessionTTL)
+	}()
 	return &data, nil
 }
 
