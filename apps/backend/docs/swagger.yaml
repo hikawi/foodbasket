@@ -51,10 +51,12 @@ paths:
         schema:
           $ref: '#/definitions/dto.PostRegisterBody'
       responses:
-        "40":
-          description: ""
+        "201":
+          description: Successfully created a new account
         "400":
           description: Bad request
+        "500":
+          description: Couldn't register a new user
       summary: Registers an account.
       tags:
       - authentication

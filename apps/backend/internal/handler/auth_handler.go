@@ -71,9 +71,9 @@ func (h *AuthHandler) postLogin(c *echo.Context) error {
 // @accept			json
 // @param			body	body	dto.PostRegisterBody	true	"Body credentials"
 // @router			/auth/register [post]
-// @success 201 "Successfully created a new account"
+// @success		201	"Successfully created a new account"
 // @failure		400	"Bad request"
-// @failure		500 "Couldn't register a new user"
+// @failure		500	"Couldn't register a new user"
 func (h *AuthHandler) postRegister(c *echo.Context) error {
 	var body dto.PostRegisterBody
 	ctx := c.Request().Context()
