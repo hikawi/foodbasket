@@ -112,8 +112,8 @@ func SessionHydrate(sess services.ISessionService) echo.MiddlewareFunc {
 			// Some pre-check before defaulting back to guests.
 			// Check if the session is currently directing somewhere else.
 			if session != nil {
-				if redirectId, ok := session.Metadata["rotated_to"]; ok {
-					session, _ = sess.GetSession(ctx, redirectId.(string))
+				if redirectID, ok := session.Metadata["rotated_to"]; ok {
+					session, _ = sess.GetSession(ctx, redirectID.(string))
 				}
 			}
 

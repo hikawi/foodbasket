@@ -68,7 +68,19 @@ tasks:
 
   # --- Build & Types ---
   generate:
-    desc: Run sqlc and generate types
+    desc: Generate sqlc types and swaggo
     dir: apps/backend
     cmds:
       - sqlc generate
+      - swag f
+      - swag i
+
+  build:backend:
+    desc: Run docker build on backend
+    dir: apps/backend
+    cmds:
+      - docker build -t foodbasket-backend .
+
+  build:
+    desc: Build Dockerfiles
+    deps: [build:backend]
