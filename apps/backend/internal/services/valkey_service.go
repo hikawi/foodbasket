@@ -17,6 +17,9 @@ type IValkeyService interface {
 	Sremove(ctx context.Context, key string, val string) error
 	Smembers(ctx context.Context, key string) ([]string, error)
 	Sismember(ctx context.Context, key string, val string) (bool, error)
+
+	// Higher-level functions for valkey service
+	Sset(ctx context.Context, key string, members []string) error
 }
 
 type ValkeyService struct {
@@ -70,4 +73,20 @@ func (s *ValkeyService) Sismember(ctx context.Context, key string, member string
 
 	v, err := res.AsInt64()
 	return v == 1, err
+}
+
+func (s *ValkeyService) Sset(ctx context.Context, key string, members []string) error {
+	b := s.client.B()
+
+	cmds := make([]valkey.Completed, 0, 3)
+	cmds = append(cmds, b.Del().Key(key).Build())
+	cmds = append(cmds, b.Sadd().Key(key).Member(members...).Build())
+	cmds = append(cmds, b.Expire().Key(key).Seconds(3600).Build())
+
+	for _, res := range s.client.DoMulti(ctx, cmds...) {
+		if err := res.Error(); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -93,7 +93,7 @@ func (h *AuthHandler) postRegister(c *echo.Context) error {
 	userID := user.ID.String()
 	userName := user.Name
 
-	sessionId, err := h.sessionService.Create(ctx, user.ID.String(), services.SessionData{
+	_, err = h.sessionService.CreateSession(ctx, services.SessionData{
 		UserID:    &userID,
 		Email:     &userName,
 		IsGuest:   false,

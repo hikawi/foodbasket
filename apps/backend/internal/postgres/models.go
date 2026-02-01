@@ -5,6 +5,7 @@
 package postgres
 
 import (
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -16,22 +17,22 @@ type Permission struct {
 }
 
 type Role struct {
-	ID        pgtype.UUID
+	ID        uuid.UUID
 	Name      string
-	TenantID  pgtype.UUID
+	TenantID  uuid.UUID
 	CreatedAt pgtype.Timestamptz
 	UpdatedAt pgtype.Timestamptz
 	DeletedAt pgtype.Timestamptz
 }
 
 type RolesPermission struct {
-	RoleID       pgtype.UUID
+	RoleID       uuid.UUID
 	PermissionID string
 	CreatedAt    pgtype.Timestamptz
 }
 
 type Tenant struct {
-	ID        pgtype.UUID
+	ID        uuid.UUID
 	Name      string
 	CreatedAt pgtype.Timestamptz
 	UpdatedAt pgtype.Timestamptz
@@ -39,7 +40,7 @@ type Tenant struct {
 }
 
 type User struct {
-	ID        pgtype.UUID
+	ID        uuid.UUID
 	Name      string
 	Email     string
 	Password  pgtype.Text
@@ -49,7 +50,7 @@ type User struct {
 }
 
 type UsersRole struct {
-	UserID    pgtype.UUID
-	RoleID    pgtype.UUID
+	UserID    uuid.UUID
+	RoleID    uuid.UUID
 	CreatedAt pgtype.Timestamptz
 }

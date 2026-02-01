@@ -9,6 +9,6 @@ const (
 	ValkeySessionPrefix      = "foodbasket:auth:sess:" // foodbasket:auth:sess:<session_id>
 	ValkeyUserIndexPrefix    = "foodbasket:auth:uidx:" // foodbasket:auth:uidx:<user_id>
 	ValkeyRegistryTenantsKey = "foodbasket:registry:tenants"
-	ValkeyPermissionsPrefix  = "foodbasket:auth:perms:" // foodbasket:auth:perms:<tenant_id>
+	ValkeyPermissionsPrefix  = "foodbasket:auth:perms:" // foodbasket:auth:perms:<tenant_id>:<user_id>
 	ValkeySessionTTL         = 30 * time.Minute
 )

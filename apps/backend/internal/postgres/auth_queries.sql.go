@@ -8,6 +8,7 @@ package postgres
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -55,4 +56,37 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const getUserPermissions = `-- name: GetUserPermissions :many
+SELECT permissions.id FROM permissions
+INNER JOIN roles_permissions ON permissions.id = roles_permissions.permission_id
+INNER JOIN roles ON roles_permissions.role_id = roles.id
+INNER JOIN users_roles ON users_roles.role_id = roles.id
+WHERE users_roles.user_id = $1 AND roles.tenant_id = $2 AND roles.deleted_at IS NULL
+`
+
+type GetUserPermissionsParams struct {
+	UserID   uuid.UUID
+	TenantID uuid.UUID
+}
+
+func (q *Queries) GetUserPermissions(ctx context.Context, arg GetUserPermissionsParams) ([]string, error) {
+	rows, err := q.db.Query(ctx, getUserPermissions, arg.UserID, arg.TenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

@@ -1,0 +1,11 @@
+dir: "internal/mocks"
+pkgname: "mocks"
+all: true
+recursive: true
+include-auto-generated: true
+filename: "mock_{{.InterfaceName}}.go"
+template: testify
+packages:
+  luny.dev/foodbasket:
+    config:
+      all: true
