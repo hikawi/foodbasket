@@ -2,11 +2,13 @@ package services
 
 import (
 	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 )
 
 type IRandomService interface {
 	GenerateRandomBytes(keySize uint) ([]byte, error)
+	GenerateSecretToken(tokenSize uint) (string, error)
 }
 
 type RandomService struct{}
@@ -24,4 +26,12 @@ func (s *RandomService) GenerateRandomBytes(keySize uint) ([]byte, error) {
 		return nil, fmt.Errorf("salt generation failed: %w", err)
 	}
 	return key, nil
+}
+
+func (s *RandomService) GenerateSecretToken(tokenSize uint) (string, error) {
+	bytes, err := s.GenerateRandomBytes(tokenSize)
+	if err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(bytes), nil
 }

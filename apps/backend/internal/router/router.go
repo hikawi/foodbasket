@@ -21,15 +21,21 @@ func (cv *CustomValidator) Validate(i any) error {
 	return nil
 }
 
-func SetupServer() *echo.Echo {
+func SetupServer(serviceRegistry services.ServiceRegistry) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.RemoveTrailingSlash(), middleware.Recover())
+	e.Use(handler.CORSMiddleware(serviceRegistry.ValkeyService))
+	e.Use(handler.HostHydrate())
+	e.Use(handler.SessionHydrate(serviceRegistry.SessionService))
 	e.Validator = &CustomValidator{validator: validator.New()}
 
 	return e
 }
 
-func SetupRoutes(e *echo.Echo, cfg app.AppConfig, serviceRegistry services.ServiceRegistry) {
-	authHandler := handler.NewAuthHandler(serviceRegistry.UserService)
+func SetupRoutes(e *echo.Group, cfg app.AppConfig, serviceRegistry services.ServiceRegistry) {
+	authHandler := handler.NewAuthHandler(serviceRegistry.UserService, serviceRegistry.SessionService)
 	authHandler.SetupRoutes(e)
+
+	healthHandler := handler.NewHealthHandler()
+	healthHandler.SetupRoutes(e)
 }

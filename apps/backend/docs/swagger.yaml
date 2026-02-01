@@ -1,0 +1,61 @@
+basePath: /v1
+definitions:
+  dto.PostRegisterBody:
+    properties:
+      email:
+        type: string
+      name:
+        minLength: 2
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+info:
+  contact:
+    email: hello@luny.dev
+    name: Nguyệt Ánh
+    url: https://www.luny.dev
+  description: Backend documentation for FoodBasket platform.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: FoodBasket
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Logins to an existing account if there is an account with that
+        specific credentials.
+      responses: {}
+      summary: Logins to an existing account.
+      tags:
+      - authentication
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a user account within the system. This registration does
+        not create a new tenant.
+      parameters:
+      - description: Body credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PostRegisterBody'
+      responses:
+        "40":
+          description: ""
+        "400":
+          description: Bad request
+      summary: Registers an account.
+      tags:
+      - authentication
+swagger: "2.0"
