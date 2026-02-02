@@ -102,6 +102,7 @@ data. Therefore, all keys used should have this project's name prefixed: `foodba
 
 - Sessions should be named as `foodbasket:auth:sess:<session_id>`
 - User sessions index should be named as `foodbasket:auth:user_idx:<user_id>`
+- Permissions should be named as `foodbasket:auth:perms:<tenant_id>:<user_id>`
 
 > Further key naming related to authentication may be added in the future.
 

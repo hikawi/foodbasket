@@ -22,11 +22,13 @@ CREATE INDEX idx_users_deleted_at ON users(deleted_at);
 CREATE TABLE tenants (
     id UUID PRIMARY KEY,
     name TEXT NOT NULL,
+    slug TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     deleted_at TIMESTAMPTZ
 );
 
+CREATE UNIQUE INDEX idx_tenants_slug ON tenants(slug) WHERE (deleted_at IS NULL);
 CREATE INDEX idx_tenants_deleted_at ON tenants(deleted_at);
 
 ---

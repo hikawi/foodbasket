@@ -22,6 +22,10 @@ tasks:
       - for: { var: FRONTENDS }
         cmd: cd apps/{{.ITEM}} && pnpm format
 
+  format:
+    desc: Format all projects
+    deps: [format:frontends]
+
   # --- Infrastructure ---
   infra:
     desc: Start Docker containers (DB, Redis, Mailpit, etc.)
