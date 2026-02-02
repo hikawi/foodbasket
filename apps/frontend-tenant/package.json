@@ -7,7 +7,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "format": "prettier --write --experimental-cli src/"
+    "format": "prettier --write --experimental-cli ./"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.0",

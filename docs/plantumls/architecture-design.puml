@@ -1,0 +1,72 @@
+@startuml
+
+title FoodBasket Architecture Design
+left to right direction
+
+rectangle "Consumer-Side" {
+
+component "Platform Page\n(foodbasket.app)" as home
+
+component "Tenant1 Page\n(tenant1.foodbasket.app)" as tenant1
+component "Tenant2 Page\n(tenant2.foodbasket.app)" as tenant2
+
+}
+
+rectangle "Business-Side" {
+
+component "Tenant1 POS\n(pos.tenant1.foodbasket.app)" as tenant1pos
+component "Tenant2 POS\n(pos.tenant2.foodbasket.app)" as tenant2pos
+
+}
+
+rectangle "Admin-Side" {
+
+component "Platform Admin\n(admin.foodbasket.app)" as admin
+
+}
+
+rectangle "Backend" {
+
+component "Centralized Backend\n(api.foodbasket.app)" as api
+
+note top of api: Includes Swagger documentation at /swagger
+
+}
+
+cloud "External Infra" {
+
+node "Bunny CDN\n(cdn.luny.dev)" as cdn
+node "PurelyMail\n(smtp.purelymail.com)" as smtp
+
+}
+
+database "Databases" {
+
+database "Centralized S3\n(s3.luny.dev)" as s3
+database "Centralized Postgres" as postgres
+database "Centralized Valkey" as valkey
+
+}
+
+cdn --> s3: pulls
+api --> valkey: reads, writes cache data
+api --> postgres: business reads/writes
+
+home --> api: reads accounts/tenants data
+home --> cdn: assets
+
+api --> smtp: sends emails
+
+tenant1 --> api: reads specific tenant1's page
+tenant2 --> api: reads specific tenant2's page
+tenant1pos --> api: reads specific tenant1's pos
+tenant2pos --> api: reads specific tenant2's pos
+admin --> api: reads platform-wide data
+
+footer
+
+Nodes without a specified DNS are private, and not accessible from the Internet.
+
+end footer
+
+@enduml

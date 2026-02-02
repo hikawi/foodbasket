@@ -3,6 +3,8 @@ title: ES03 - Host, Tenant and Session Hydration
 parent: Product & Engineering Specifications
 ---
 
+# ES03 - Host, Tenant and Session Hydration
+
 ## Summary
 
 This document outlines the process of hydrating a context throughout the echo's

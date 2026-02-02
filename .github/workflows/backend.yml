@@ -108,7 +108,7 @@ jobs:
           context: backend
           platforms: linux/amd64
           tags: |
-            ghcr.io/hikawi/foodbasket:latest
+            ghcr.io/hikawi/foodbasket-api:latest
 
   deploy:
     runs-on: ubuntu-latest
