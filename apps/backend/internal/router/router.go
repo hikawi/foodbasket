@@ -27,6 +27,7 @@ func SetupServer(serviceRegistry services.ServiceRegistry) *echo.Echo {
 	e.Use(handler.CORSMiddleware(serviceRegistry.ValkeyService))
 	e.Use(handler.HostHydrate())
 	e.Use(handler.SessionHydrate(serviceRegistry.SessionService))
+	e.Use(handler.PermissionHydrate(serviceRegistry.PermissionService))
 	e.Validator = &CustomValidator{validator: validator.New()}
 
 	return e
