@@ -1,13 +1,17 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v5"
+	"github.com/samber/lo"
 	"luny.dev/foodbasket/internal/constants"
+	"luny.dev/foodbasket/internal/logging"
 	"luny.dev/foodbasket/internal/services"
 )
 
@@ -134,13 +138,43 @@ func SessionHydrate(sess services.ISessionService) echo.MiddlewareFunc {
 	}
 }
 
-// TenantHydrate hydrates the echo's context with the current tenant's permission,
+// PermissionHydrate hydrates the echo's context with the current tenant's permission,
 // provided the tenant's host ID, the user ID, and the session ID has been considered
 // valid by previous middlewares.
-func TenantHydrate(valkey services.IValkeyService) echo.MiddlewareFunc {
+func PermissionHydrate(permissionSvc services.IPermissionService) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
+			session, ok := c.Get("session").(services.SessionData)
+			if !ok || session.UserID == nil {
+				return next(c) // no session to populate, or guest can't populate.
+			}
+
+			tenantID, ok := c.Get("tenant_id").(string)
+			if !ok || tenantID == "" {
+				return next(c) // no tenant to populate
+			}
+
+			perms, err := permissionSvc.GetUserPermissions(c.Request().Context(), uuid.MustParse(*session.UserID), uuid.MustParse(tenantID))
+			if err != nil {
+				logging.Error(c, "failed to populate permissions for session", "session", session, "tenant_id", tenantID)
+				return next(c)
+			}
+
+			c.Set("permissions", perms)
 			return next(c)
+		}
+	}
+}
+
+func HasPermission(permission string) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c *echo.Context) error {
+			permissions, ok := c.Get("permissions").([]string)
+			if ok && lo.Contains(permissions, permission) {
+				return next(c) // allowed through
+			}
+
+			return echo.ErrForbidden.Wrap(fmt.Errorf("failed to meet permission %s", permission))
 		}
 	}
 }

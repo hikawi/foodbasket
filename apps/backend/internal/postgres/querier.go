@@ -10,6 +10,8 @@ import (
 
 type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	GetAllTenants(ctx context.Context) ([]Tenant, error)
+	GetTenants(ctx context.Context, arg GetTenantsParams) ([]Tenant, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserPermissions(ctx context.Context, arg GetUserPermissionsParams) ([]string, error)
 }

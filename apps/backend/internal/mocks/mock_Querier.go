@@ -104,6 +104,136 @@ func (_c *MockQuerier_CreateUser_Call) RunAndReturn(run func(ctx context.Context
 	return _c
 }
 
+// GetAllTenants provides a mock function for the type MockQuerier
+func (_mock *MockQuerier) GetAllTenants(ctx context.Context) ([]postgres.Tenant, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAllTenants")
+	}
+
+	var r0 []postgres.Tenant
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]postgres.Tenant, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []postgres.Tenant); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]postgres.Tenant)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockQuerier_GetAllTenants_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllTenants'
+type MockQuerier_GetAllTenants_Call struct {
+	*mock.Call
+}
+
+// GetAllTenants is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockQuerier_Expecter) GetAllTenants(ctx interface{}) *MockQuerier_GetAllTenants_Call {
+	return &MockQuerier_GetAllTenants_Call{Call: _e.mock.On("GetAllTenants", ctx)}
+}
+
+func (_c *MockQuerier_GetAllTenants_Call) Run(run func(ctx context.Context)) *MockQuerier_GetAllTenants_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockQuerier_GetAllTenants_Call) Return(tenants []postgres.Tenant, err error) *MockQuerier_GetAllTenants_Call {
+	_c.Call.Return(tenants, err)
+	return _c
+}
+
+func (_c *MockQuerier_GetAllTenants_Call) RunAndReturn(run func(ctx context.Context) ([]postgres.Tenant, error)) *MockQuerier_GetAllTenants_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetTenants provides a mock function for the type MockQuerier
+func (_mock *MockQuerier) GetTenants(ctx context.Context, arg postgres.GetTenantsParams) ([]postgres.Tenant, error) {
+	ret := _mock.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetTenants")
+	}
+
+	var r0 []postgres.Tenant
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, postgres.GetTenantsParams) ([]postgres.Tenant, error)); ok {
+		return returnFunc(ctx, arg)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, postgres.GetTenantsParams) []postgres.Tenant); ok {
+		r0 = returnFunc(ctx, arg)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]postgres.Tenant)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, postgres.GetTenantsParams) error); ok {
+		r1 = returnFunc(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockQuerier_GetTenants_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTenants'
+type MockQuerier_GetTenants_Call struct {
+	*mock.Call
+}
+
+// GetTenants is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg postgres.GetTenantsParams
+func (_e *MockQuerier_Expecter) GetTenants(ctx interface{}, arg interface{}) *MockQuerier_GetTenants_Call {
+	return &MockQuerier_GetTenants_Call{Call: _e.mock.On("GetTenants", ctx, arg)}
+}
+
+func (_c *MockQuerier_GetTenants_Call) Run(run func(ctx context.Context, arg postgres.GetTenantsParams)) *MockQuerier_GetTenants_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 postgres.GetTenantsParams
+		if args[1] != nil {
+			arg1 = args[1].(postgres.GetTenantsParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockQuerier_GetTenants_Call) Return(tenants []postgres.Tenant, err error) *MockQuerier_GetTenants_Call {
+	_c.Call.Return(tenants, err)
+	return _c
+}
+
+func (_c *MockQuerier_GetTenants_Call) RunAndReturn(run func(ctx context.Context, arg postgres.GetTenantsParams) ([]postgres.Tenant, error)) *MockQuerier_GetTenants_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetUserByEmail provides a mock function for the type MockQuerier
 func (_mock *MockQuerier) GetUserByEmail(ctx context.Context, email string) (postgres.User, error) {
 	ret := _mock.Called(ctx, email)
