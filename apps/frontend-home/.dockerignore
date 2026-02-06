@@ -1,0 +1,9 @@
+.astro
+dist
+.vscode
+node_modules
+.dockerignore
+.gitignore
+Dockerfile
+README.md
+
