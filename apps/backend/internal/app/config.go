@@ -7,8 +7,6 @@ import (
 	"luny.dev/foodbasket/pkg/env"
 )
 
-var Test = 1
-
 type AppConfig struct {
 	PostgresURL  string
 	ValkeyURLs   []string

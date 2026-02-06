@@ -1,4 +1,4 @@
-name: FoodBasket Backend CI/CD
+name: CherryAuctions Frontend CI/CD
 
 permissions:
   contents: write
@@ -7,80 +7,50 @@ permissions:
 on:
   push:
     paths:
-      - apps/backend/**
+      - apps/frontend-home/**
   pull_request:
     paths:
-      - apps/backend/**
+      - apps/frontend-home/**
 
 jobs:
-  lint:
+  commitlint:
     runs-on: ubuntu-latest
-    name: Lint
+    name: Commit Lint
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-        with:
-          fetch-depth: 0 # Don't truncate commit
 
       - uses: wagoid/commitlint-github-action@v6
         name: Commitlint
 
-      - name: Setup dependencies
-        run: sudo apt-get update && sudo apt-get install libvips-dev libvips-tools pkg-config
-
-      - uses: actions/setup-go@v6
-        name: Setup Go
-        with:
-          go-version-file: "./apps/backend/go.mod"
-          cache-dependency-path: "apps/backend/go.sum"
-
-      - name: Lint Golang
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.6
-          working-directory: apps/backend
-
-  test:
-    runs-on: ubuntu-latest
-    name: Test
-    needs: ["lint"]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - uses: actions/setup-go@v6
-        name: Setup Go
-        with:
-          go-version-file: "./apps/backend/go.mod"
-          cache-dependency-path: "apps/backend/go.sum"
-
-      - name: Setup dependencies
-        run: sudo apt-get update && sudo apt-get install libvips-dev libvips-tools pkg-config
-
-      - name: Test
-        run: go test ./... -cover
-        working-directory: apps/backend
-
   build:
     runs-on: ubuntu-latest
     name: Build
-    needs: ["test"]
+    needs: ["commitlint"]
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - uses: actions/setup-go@v6
-        name: Setup Go 1.25.4
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
         with:
-          go-version-file: "./apps/backend/go.mod"
-          cache-dependency-path: "apps/backend/go.sum"
+          version: 10
+          run_install: false
 
-      - name: Setup dependencies
-        run: sudo apt-get update && sudo apt-get install libvips-dev libvips-tools pkg-config
+      - uses: actions/setup-node@v6
+        name: Setup Node
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: ./apps/frontend-home/pnpm-lock.yaml
+
+      - name: Install Node dependencies
+        working-directory: apps/frontend
+        run: pnpm i --frozen-lockfile
 
       - name: Build
-        working-directory: apps/backend
-        run: go build .
+        working-directory: apps/frontend
+        run: pnpm build
 
   docker:
     runs-on: ubuntu-latest
@@ -105,10 +75,10 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          context: apps/backend
+          context: apps/frontend-home
           platforms: linux/amd64
           tags: |
-            ghcr.io/hikawi/foodbasket-api:latest
+            ghcr.io/hikawi/foodbasket-frontend-home:latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -120,7 +90,6 @@ jobs:
       cancel-in-progress: false
     environment:
       name: Production
-      url: https://api.foodbasket.luny.dev
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
@@ -133,5 +102,5 @@ jobs:
 
             cd /srv
             docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-            docker compose up -d --pull always foodbasket-api
+            docker compose up -d --pull always foodbasket-frontend-home
             docker system prune -af
