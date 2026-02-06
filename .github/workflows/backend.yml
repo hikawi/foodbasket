@@ -85,7 +85,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     name: Docker Build
-    #if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: ["build"]
     steps:
       - name: Checkout
@@ -114,7 +114,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy
     needs: ["docker"]
-    #if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     concurrency:
       group: "production"
       cancel-in-progress: false

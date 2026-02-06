@@ -1,4 +1,4 @@
-name: FoodBasket Frontend Home CI/CD
+name: FoodBasket Frontend Tenant CI/CD
 
 permissions:
   contents: write
@@ -7,10 +7,10 @@ permissions:
 on:
   push:
     paths:
-      - apps/frontend-home/**
+      - apps/frontend-tenant/**
   pull_request:
     paths:
-      - apps/frontend-home/**
+      - apps/frontend-tenant/**
 
 jobs:
   commitlint:
@@ -45,11 +45,11 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install Node dependencies
-        working-directory: apps/frontend-home
+        working-directory: apps/frontend-tenant
         run: pnpm i
 
       - name: Build
-        working-directory: apps/frontend-home
+        working-directory: apps/frontend-tenant
         run: pnpm build
 
   docker:
@@ -75,10 +75,10 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          context: apps/frontend-home
+          context: apps/frontend-tenant
           platforms: linux/amd64
           tags: |
-            ghcr.io/hikawi/foodbasket-frontend-home:latest
+            ghcr.io/hikawi/foodbasket-frontend-tenant:latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -102,5 +102,5 @@ jobs:
 
             cd /srv
             docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-            docker compose up -d --pull always foodbasket-frontend-home
+            docker compose up -d --pull always foodbasket-frontend-tenant
             docker system prune -af
