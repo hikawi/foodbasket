@@ -1,6 +1,6 @@
 @startuml
 
-title FoodBasket Architecture Design
+title FoodBasket Architecture Design v2
 left to right direction
 
 rectangle "Consumer-Side" {
@@ -14,8 +14,8 @@ component "Tenant2 Page\n(tenant2.foodbasket.app)" as tenant2
 
 rectangle "Business-Side" {
 
-component "Tenant1 POS\n(pos.tenant1.foodbasket.app)" as tenant1pos
-component "Tenant2 POS\n(pos.tenant2.foodbasket.app)" as tenant2pos
+component "Tenant1 POS\n(tenant1.pos.foodbasket.app)" as tenant1pos
+component "Tenant2 POS\n(tenant2.pos.foodbasket.app)" as tenant2pos
 
 }
 

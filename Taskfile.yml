@@ -85,6 +85,16 @@ tasks:
     cmds:
       - docker build -t foodbasket-backend .
 
+  build:home:
+    desc: Run docker build on frontend-home
+    cmds:
+      - docker build --target frontend-home -t foodbasket-frontend-home .
+
+  build:tenant:
+    desc: Run docker build on frontend-tenant
+    cmds:
+      - docker build --target frontend-tenant -t foodbasket-frontend-tenant .
+
   build:
     desc: Build Dockerfiles
-    deps: [build:backend]
+    deps: [build:backend, build:home, build:tenant]
