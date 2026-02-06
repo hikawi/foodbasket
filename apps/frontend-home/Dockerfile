@@ -14,5 +14,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./package.json
 
+ENV PORT=80
+ENV HOST=0.0.0.0
+ENV NODE_ENV=production
 CMD ["node", "./dist/server/entry.mjs"]
 
