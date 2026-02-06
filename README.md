@@ -6,6 +6,11 @@
 
 </div>
 
+## Links
+
+- [Documentation](https://docs.foodbasket.app)
+- [Main Page](https://foodbasket.app)
+
 ## Overview
 
 MISE is a specialized B2B backend and frontend suite designed for the restaurant

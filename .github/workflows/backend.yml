@@ -8,6 +8,8 @@ on:
   push:
     paths:
       - apps/backend/**
+    branches:
+      - main, chore/*
   pull_request:
     paths:
       - apps/backend/**
@@ -105,7 +107,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          context: backend
+          context: apps/backend
           platforms: linux/amd64
           tags: |
             ghcr.io/hikawi/foodbasket-api:latest
