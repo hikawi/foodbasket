@@ -116,7 +116,7 @@ jobs:
     needs: ["docker"]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     concurrency:
-      group: "production"
+      group: "backend"
       cancel-in-progress: false
     environment:
       name: Production
