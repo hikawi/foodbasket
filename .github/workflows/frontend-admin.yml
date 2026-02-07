@@ -1,4 +1,4 @@
-name: FoodBasket Frontend POS CI/CD
+name: FoodBasket Frontend Admin CI/CD
 
 permissions:
   contents: write
@@ -7,10 +7,10 @@ permissions:
 on:
   push:
     paths:
-      - apps/frontend-pos/**
+      - apps/frontend-admin/**
   pull_request:
     paths:
-      - apps/frontend-pos/**
+      - apps/frontend-admin/**
 
 jobs:
   commitlint:
@@ -45,17 +45,17 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install Node dependencies
-        working-directory: apps/frontend-pos
+        working-directory: apps/frontend-admin
         run: pnpm i
 
       - name: Build
-        working-directory: apps/frontend-pos
+        working-directory: apps/frontend-admin
         run: pnpm build
 
   docker:
     runs-on: ubuntu-latest
     name: Docker Build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    #if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: ["build"]
     steps:
       - name: Checkout
@@ -75,16 +75,16 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          context: apps/frontend-pos
+          context: apps/frontend-admin
           platforms: linux/amd64
           tags: |
-            ghcr.io/hikawi/foodbasket-frontend-pos:latest
+            ghcr.io/hikawi/foodbasket-frontend-admin:latest
 
   deploy:
     runs-on: ubuntu-latest
     name: Deploy
     needs: ["docker"]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    #if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     concurrency:
       group: "production"
       cancel-in-progress: false
@@ -102,5 +102,5 @@ jobs:
 
             cd /srv
             docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-            docker compose up -d --pull always foodbasket-frontend-pos
+            docker compose up -d --pull always foodbasket-frontend-admin
             docker system prune -af
