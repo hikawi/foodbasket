@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  /* Default theming */
+  --color-label-primary: oklch(0 0 0);
+  --color-label-secondary: oklch(0.3588 0.012 285.78 / 60%);
+  --color-label-tertiary: oklch(0.3588 0.012 285.78 / 30%);
+  --color-label-quaternary: oklch(0.3588 0.012 285.78 / 18%);
+  --color-background-primary: oklch(1 0 0);
+  --color-background-secondary: oklch(0.9626 0.0066 286.27);
+  --color-background-tertiary: oklch(1 0 0);
+  --color-grouped-background-primary: oklch(0.9626 0.0066 286.27);
+  --color-grouped-background-secondary: oklch(1 0 0);
+  --color-grouped-background-tertiary: oklch(0.9626 0.0066 286.27);
+  --color-accent-primary: oklch(0.772 0.1738 64.55);
+  --color-state-warning: oklch(0.7288 0.1678 55.23);
+  --color-state-danger: oklch(0.6532 0.2328 25.74);
+  --color-state-success: oklch(0.7303 0.1944 147.44);
+  --color-state-info: oklch(0.6321 0.2018 254.09);
+  --color-state-neutral: oklch(0.6483 0.0073 286.19);
+}
+
+@layer base {
+  :root {
+    @apply antialiased;
+  }
+}

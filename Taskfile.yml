@@ -79,6 +79,11 @@ tasks:
       - swag f
       - swag i
 
+  build:ui:
+    desc: Build packages/ui
+    cmds:
+      - pnpm --filter @foodbasket/ui build
+
   build:backend:
     desc: Run docker build on backend
     dir: apps/backend
