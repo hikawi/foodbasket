@@ -106,6 +106,7 @@ to see usable commands. For example:
 - `go-task dev` starts the backend and all the frontends with hot reload.
 - `go-task build` tries to build Docker images of each to allow easy deployment.
 - `go-task generate` to generate type-safe queries with SQLC and Swaggo documentation.
+- `go-task build:ui` to build the UI components.
 
 There are the following apps inside this mono-repo, under `/apps`:
 
@@ -161,4 +162,10 @@ on Windows, and add the following:
 
 `twinbells` can be changed to match whatever your fake restaurant to be. But this
 should be enough to differentiate between the four frontend applications. You may
-add more to the system, for example a different tenant to see what
+add more to the system, for example a different tenant to see what.
+
+### Using Caddy/Nginx
+
+You may use caddy or nginx as a way to reverse proxy into the services. There is
+already a `Caddyfile` as an example for what you can do. But I won't go too deep
+into that.

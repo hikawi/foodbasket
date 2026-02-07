@@ -1,0 +1,17 @@
+# Caddyfile for your own server setup.
+
+http://admin.foodbasket.localhost {
+	reverse_proxy localhost:3003
+}
+
+http://twinbells.foodbasket.localhost {
+	reverse_proxy localhost:3001
+}
+
+http://foodbasket.localhost {
+	reverse_proxy localhost:3000
+}
+
+http://twinbells.pos.foodbasket.localhost {
+	reverse_proxy localhost:3002
+}
