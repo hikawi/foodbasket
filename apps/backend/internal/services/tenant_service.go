@@ -52,7 +52,7 @@ func (s *TenantService) GetTenantID(ctx context.Context, slug string) (*uuid.UUI
 		return nil, err
 	} else {
 		// If there is, put in the ID as value.
-		err = s.valkey.Set(ctx, constants.TenantSlugKey(slug), tenant.ID.String(), constants.ValkeyCacheTTL)
+		_ = s.valkey.Set(ctx, constants.TenantSlugKey(slug), tenant.ID.String(), constants.ValkeyCacheTTL)
 		return &tenant.ID, nil
 	}
 }
