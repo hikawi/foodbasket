@@ -7,6 +7,8 @@ package postgres
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const getAllTenants = `-- name: GetAllTenants :many
@@ -40,6 +42,46 @@ func (q *Queries) GetAllTenants(ctx context.Context) ([]Tenant, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const getTenantByID = `-- name: GetTenantByID :one
+SELECT id, name, slug, created_at, updated_at, deleted_at FROM tenants
+WHERE deleted_at IS NULL AND id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetTenantByID(ctx context.Context, id uuid.UUID) (Tenant, error) {
+	row := q.db.QueryRow(ctx, getTenantByID, id)
+	var i Tenant
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getTenantBySlug = `-- name: GetTenantBySlug :one
+SELECT id, name, slug, created_at, updated_at, deleted_at FROM tenants
+WHERE deleted_at IS NULL AND LOWER(slug) = LOWER($1)
+LIMIT 1
+`
+
+func (q *Queries) GetTenantBySlug(ctx context.Context, lower string) (Tenant, error) {
+	row := q.db.QueryRow(ctx, getTenantBySlug, lower)
+	var i Tenant
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
 }
 
 const getTenants = `-- name: GetTenants :many

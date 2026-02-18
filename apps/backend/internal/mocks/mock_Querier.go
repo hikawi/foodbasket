@@ -7,6 +7,7 @@ package mocks
 import (
 	"context"
 
+	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 	"luny.dev/foodbasket/internal/postgres"
 )
@@ -162,6 +163,138 @@ func (_c *MockQuerier_GetAllTenants_Call) Return(tenants []postgres.Tenant, err 
 }
 
 func (_c *MockQuerier_GetAllTenants_Call) RunAndReturn(run func(ctx context.Context) ([]postgres.Tenant, error)) *MockQuerier_GetAllTenants_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetTenantByID provides a mock function for the type MockQuerier
+func (_mock *MockQuerier) GetTenantByID(ctx context.Context, id uuid.UUID) (postgres.Tenant, error) {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetTenantByID")
+	}
+
+	var r0 postgres.Tenant
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (postgres.Tenant, error)); ok {
+		return returnFunc(ctx, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) postgres.Tenant); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		r0 = ret.Get(0).(postgres.Tenant)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockQuerier_GetTenantByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTenantByID'
+type MockQuerier_GetTenantByID_Call struct {
+	*mock.Call
+}
+
+// GetTenantByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+func (_e *MockQuerier_Expecter) GetTenantByID(ctx interface{}, id interface{}) *MockQuerier_GetTenantByID_Call {
+	return &MockQuerier_GetTenantByID_Call{Call: _e.mock.On("GetTenantByID", ctx, id)}
+}
+
+func (_c *MockQuerier_GetTenantByID_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockQuerier_GetTenantByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockQuerier_GetTenantByID_Call) Return(tenant postgres.Tenant, err error) *MockQuerier_GetTenantByID_Call {
+	_c.Call.Return(tenant, err)
+	return _c
+}
+
+func (_c *MockQuerier_GetTenantByID_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (postgres.Tenant, error)) *MockQuerier_GetTenantByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetTenantBySlug provides a mock function for the type MockQuerier
+func (_mock *MockQuerier) GetTenantBySlug(ctx context.Context, lower string) (postgres.Tenant, error) {
+	ret := _mock.Called(ctx, lower)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetTenantBySlug")
+	}
+
+	var r0 postgres.Tenant
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (postgres.Tenant, error)); ok {
+		return returnFunc(ctx, lower)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) postgres.Tenant); ok {
+		r0 = returnFunc(ctx, lower)
+	} else {
+		r0 = ret.Get(0).(postgres.Tenant)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, lower)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockQuerier_GetTenantBySlug_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTenantBySlug'
+type MockQuerier_GetTenantBySlug_Call struct {
+	*mock.Call
+}
+
+// GetTenantBySlug is a helper method to define mock.On call
+//   - ctx context.Context
+//   - lower string
+func (_e *MockQuerier_Expecter) GetTenantBySlug(ctx interface{}, lower interface{}) *MockQuerier_GetTenantBySlug_Call {
+	return &MockQuerier_GetTenantBySlug_Call{Call: _e.mock.On("GetTenantBySlug", ctx, lower)}
+}
+
+func (_c *MockQuerier_GetTenantBySlug_Call) Run(run func(ctx context.Context, lower string)) *MockQuerier_GetTenantBySlug_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockQuerier_GetTenantBySlug_Call) Return(tenant postgres.Tenant, err error) *MockQuerier_GetTenantBySlug_Call {
+	_c.Call.Return(tenant, err)
+	return _c
+}
+
+func (_c *MockQuerier_GetTenantBySlug_Call) RunAndReturn(run func(ctx context.Context, lower string) (postgres.Tenant, error)) *MockQuerier_GetTenantBySlug_Call {
 	_c.Call.Return(run)
 	return _c
 }

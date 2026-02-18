@@ -12,11 +12,15 @@ type IValkeyService interface {
 	Set(ctx context.Context, key string, val string, ttl time.Duration) error
 	SetNx(ctx context.Context, key string, val string, ttl time.Duration) error
 	SetXx(ctx context.Context, key string, val string, ttl time.Duration) error
+	Exists(ctx context.Context, keys ...string) (int64, error)
 	Del(ctx context.Context, keys ...string) error
 	Sadd(ctx context.Context, key string, members ...string) error
 	Sremove(ctx context.Context, key string, val string) error
 	Smembers(ctx context.Context, key string) ([]string, error)
 	Sismember(ctx context.Context, key string, val string) (bool, error)
+	Hget(ctx context.Context, key string, field string) (string, error)
+
+	Expire(ctx context.Context, key string, ttl time.Duration) error
 
 	// Higher-level functions for valkey service
 	Sset(ctx context.Context, key string, members []string) error
@@ -49,6 +53,10 @@ func (s *ValkeyService) SetXx(ctx context.Context, key string, val string, ttl t
 	return s.client.Do(ctx, s.client.B().Set().Key(key).Value(val).Xx().Ex(ttl).Build()).Error()
 }
 
+func (s *ValkeyService) Exists(ctx context.Context, keys ...string) (int64, error) {
+	return s.client.Do(ctx, s.client.B().Exists().Key(keys...).Build()).AsInt64()
+}
+
 func (s *ValkeyService) Del(ctx context.Context, keys ...string) error {
 	return s.client.Do(ctx, s.client.B().Del().Key(keys...).Build()).Error()
 }
@@ -73,6 +81,21 @@ func (s *ValkeyService) Sismember(ctx context.Context, key string, member string
 
 	v, err := res.AsInt64()
 	return v == 1, err
+}
+
+func (s *ValkeyService) Hget(ctx context.Context, key string, field string) (string, error) {
+	res := s.client.Do(ctx, s.client.B().Hget().Key(key).Field(field).Build())
+	return res.ToString()
+}
+
+func (s *ValkeyService) Hset(ctx context.Context, key string, field string, value string) error {
+	res := s.client.Do(ctx, s.client.B().Hset().Key(key).FieldValue().FieldValue(field, value).Build())
+	return res.Error()
+}
+
+func (s *ValkeyService) Expire(ctx context.Context, key string, ttl time.Duration) error {
+	res := s.client.Do(ctx, s.client.B().Expire().Key(key).Seconds(int64(ttl.Seconds())).Build())
+	return res.Error()
 }
 
 func (s *ValkeyService) Sset(ctx context.Context, key string, members []string) error {

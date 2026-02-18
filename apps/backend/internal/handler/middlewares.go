@@ -29,13 +29,13 @@ func CORSMiddleware(valkey services.IValkeyService) echo.MiddlewareFunc {
 				return c.NoContent(http.StatusBadRequest)
 			}
 
-			host := u.Hostname()
+			_ = u.Hostname()
 
 			// Check if there is a tenant with that hostname
 			//  TODO: Implement caching for tenant hosts to reduce round trips to Valkey
-			if ok, err := valkey.Sismember(c.Request().Context(), constants.ValkeyRegistryTenantsKey, host); err == nil || !ok {
-				return next(c) // Not a host, blocking the browser
-			}
+			// if ok, err := valkey.Sismember(c.Request().Context(), constants.ValkeyRegistryTenantsKey, host); err == nil || !ok {
+			// 	return next(c) // Not a host, blocking the browser
+			// }
 
 			res := c.Response()
 			res.Header().Set(echo.HeaderAccessControlAllowOrigin, origin)
