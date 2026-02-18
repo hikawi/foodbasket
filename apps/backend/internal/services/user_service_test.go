@@ -11,6 +11,68 @@ import (
 	"luny.dev/foodbasket/internal/services"
 )
 
+func TestCheckUserCredentials_NoUserByEmail(t *testing.T) {
+	mockQ := mocks.NewMockQuerier(t)
+	mockPassword := mocks.NewMockIPasswordService(t)
+	ctx := t.Context()
+
+	testEmail := "testuser@foodbasket.app"
+	testPassword := "password"
+
+	userSvc := services.NewUserService(mockQ, mockPassword)
+	mockQ.EXPECT().GetUserByEmail(ctx, testEmail).Return(postgres.User{}, errors.New("error"))
+
+	ok, err := userSvc.CheckUserCredentials(ctx, testEmail, testPassword)
+
+	assert.Error(t, err)
+	assert.False(t, ok)
+
+	mockPassword.AssertNotCalled(t, "VerifyPassword")
+}
+
+func TestCheckUserCredentials_NoPassword(t *testing.T) {
+	mockQ := mocks.NewMockQuerier(t)
+	mockPassword := mocks.NewMockIPasswordService(t)
+	ctx := t.Context()
+
+	testEmail := "testuser@foodbasket.app"
+	testPassword := "password"
+
+	userSvc := services.NewUserService(mockQ, mockPassword)
+	mockQ.EXPECT().GetUserByEmail(ctx, testEmail).Return(postgres.User{Password: pgtype.Text{
+		Valid: false,
+	}}, nil)
+
+	ok, err := userSvc.CheckUserCredentials(ctx, testEmail, testPassword)
+
+	assert.Error(t, err)
+	assert.False(t, ok)
+
+	mockPassword.AssertNotCalled(t, "VerifyPassword")
+}
+
+func TestCheckUserCredentials_CanVerifyPassword(t *testing.T) {
+	mockQ := mocks.NewMockQuerier(t)
+	mockPassword := mocks.NewMockIPasswordService(t)
+	ctx := t.Context()
+
+	testEmail := "testuser@foodbasket.app"
+	testPasswordHash := "password_hash"
+	testPassword := "password"
+
+	userSvc := services.NewUserService(mockQ, mockPassword)
+	mockQ.EXPECT().GetUserByEmail(ctx, testEmail).Return(postgres.User{Password: pgtype.Text{
+		String: testPasswordHash,
+		Valid:  true,
+	}}, nil)
+	mockPassword.EXPECT().VerifyPassword(testPasswordHash, testPassword).Return(true, nil)
+
+	ok, err := userSvc.CheckUserCredentials(ctx, testEmail, testPassword)
+
+	assert.NoError(t, err)
+	assert.True(t, ok)
+}
+
 func TestRegisterUser_FailedToHashPassword(t *testing.T) {
 	q := mocks.NewMockQuerier(t)
 	passwordSvc := mocks.NewMockIPasswordService(t)

@@ -31,6 +31,28 @@ func TestGetUserPermissions_CacheHit(t *testing.T) {
 	assert.NotContains(t, perms, "c")
 }
 
+func TestGetUserPermissions_CacheMissWithDBErr(t *testing.T) {
+	valkey := mocks.NewMockIValkeyService(t)
+	querier := mocks.NewMockQuerier(t)
+
+	userID, _ := uuid.NewUUID()
+	tenantID, _ := uuid.NewUUID()
+
+	key := constants.ValkeyPermissionsPrefix + tenantID.String() + ":" + userID.String()
+	valkey.EXPECT().Smembers(t.Context(), key).Return(nil, errors.New("test error")).Once()
+	querier.EXPECT().GetUserPermissions(t.Context(), postgres.GetUserPermissionsParams{
+		UserID:   userID,
+		TenantID: tenantID,
+	}).Return(nil, errors.New("test")).Once()
+	valkey.EXPECT().Sset(t.Context(), key, []string{}).Return(nil).Once()
+
+	permSvc := services.NewPermissionService(querier, valkey)
+	perms, err := permSvc.GetUserPermissions(t.Context(), userID, tenantID)
+
+	assert.Nil(t, perms)
+	assert.Error(t, err)
+}
+
 func TestGetUserPermissions_CacheMiss(t *testing.T) {
 	valkey := mocks.NewMockIValkeyService(t)
 	querier := mocks.NewMockQuerier(t)

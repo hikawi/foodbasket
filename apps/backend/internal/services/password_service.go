@@ -85,16 +85,16 @@ func (s *PasswordService) parseArgon2Config(encodedHash string) (*argon2Config, 
 
 	// Extract version information
 	var version int
-	_, err := fmt.Sscanf(components[2], "v=%d", &version)
-	if err != nil {
+	n, err := fmt.Sscanf(components[2], "v=%d", &version)
+	if err != nil || n != 1 {
 		return nil, err
 	}
 
 	// Parse configuration parameters
 	config := &argon2Config{}
-	_, err = fmt.Sscanf(components[3], "m=%d,t=%d,p=%d",
+	n, err = fmt.Sscanf(components[3], "m=%d,t=%d,p=%d",
 		&config.memoryCost, &config.timeCost, &config.threads)
-	if err != nil {
+	if err != nil || n != 3 {
 		return nil, err
 	}
 
