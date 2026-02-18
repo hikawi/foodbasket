@@ -6,11 +6,15 @@ package postgres
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetAllTenants(ctx context.Context) ([]Tenant, error)
+	GetTenantByID(ctx context.Context, id uuid.UUID) (Tenant, error)
+	GetTenantBySlug(ctx context.Context, lower string) (Tenant, error)
 	GetTenants(ctx context.Context, arg GetTenantsParams) ([]Tenant, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserPermissions(ctx context.Context, arg GetUserPermissionsParams) ([]string, error)

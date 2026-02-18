@@ -104,6 +104,144 @@ func (_c *MockIValkeyService_Del_Call) RunAndReturn(run func(ctx context.Context
 	return _c
 }
 
+// Exists provides a mock function for the type MockIValkeyService
+func (_mock *MockIValkeyService) Exists(ctx context.Context, keys ...string) (int64, error) {
+	var tmpRet mock.Arguments
+	if len(keys) > 0 {
+		tmpRet = _mock.Called(ctx, keys)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for Exists")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) (int64, error)); ok {
+		return returnFunc(ctx, keys...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) int64); ok {
+		r0 = returnFunc(ctx, keys...)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...string) error); ok {
+		r1 = returnFunc(ctx, keys...)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockIValkeyService_Exists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exists'
+type MockIValkeyService_Exists_Call struct {
+	*mock.Call
+}
+
+// Exists is a helper method to define mock.On call
+//   - ctx context.Context
+//   - keys ...string
+func (_e *MockIValkeyService_Expecter) Exists(ctx interface{}, keys ...interface{}) *MockIValkeyService_Exists_Call {
+	return &MockIValkeyService_Exists_Call{Call: _e.mock.On("Exists",
+		append([]interface{}{ctx}, keys...)...)}
+}
+
+func (_c *MockIValkeyService_Exists_Call) Run(run func(ctx context.Context, keys ...string)) *MockIValkeyService_Exists_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		var variadicArgs []string
+		if len(args) > 1 {
+			variadicArgs = args[1].([]string)
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIValkeyService_Exists_Call) Return(n int64, err error) *MockIValkeyService_Exists_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockIValkeyService_Exists_Call) RunAndReturn(run func(ctx context.Context, keys ...string) (int64, error)) *MockIValkeyService_Exists_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Expire provides a mock function for the type MockIValkeyService
+func (_mock *MockIValkeyService) Expire(ctx context.Context, key string, ttl time.Duration) error {
+	ret := _mock.Called(ctx, key, ttl)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Expire")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, time.Duration) error); ok {
+		r0 = returnFunc(ctx, key, ttl)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockIValkeyService_Expire_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Expire'
+type MockIValkeyService_Expire_Call struct {
+	*mock.Call
+}
+
+// Expire is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key string
+//   - ttl time.Duration
+func (_e *MockIValkeyService_Expecter) Expire(ctx interface{}, key interface{}, ttl interface{}) *MockIValkeyService_Expire_Call {
+	return &MockIValkeyService_Expire_Call{Call: _e.mock.On("Expire", ctx, key, ttl)}
+}
+
+func (_c *MockIValkeyService_Expire_Call) Run(run func(ctx context.Context, key string, ttl time.Duration)) *MockIValkeyService_Expire_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 time.Duration
+		if args[2] != nil {
+			arg2 = args[2].(time.Duration)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIValkeyService_Expire_Call) Return(err error) *MockIValkeyService_Expire_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockIValkeyService_Expire_Call) RunAndReturn(run func(ctx context.Context, key string, ttl time.Duration) error) *MockIValkeyService_Expire_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Get provides a mock function for the type MockIValkeyService
 func (_mock *MockIValkeyService) Get(ctx context.Context, key string) (string, error) {
 	ret := _mock.Called(ctx, key)
@@ -166,6 +304,78 @@ func (_c *MockIValkeyService_Get_Call) Return(s string, err error) *MockIValkeyS
 }
 
 func (_c *MockIValkeyService_Get_Call) RunAndReturn(run func(ctx context.Context, key string) (string, error)) *MockIValkeyService_Get_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Hget provides a mock function for the type MockIValkeyService
+func (_mock *MockIValkeyService) Hget(ctx context.Context, key string, field string) (string, error) {
+	ret := _mock.Called(ctx, key, field)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Hget")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (string, error)); ok {
+		return returnFunc(ctx, key, field)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) string); ok {
+		r0 = returnFunc(ctx, key, field)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = returnFunc(ctx, key, field)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockIValkeyService_Hget_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Hget'
+type MockIValkeyService_Hget_Call struct {
+	*mock.Call
+}
+
+// Hget is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key string
+//   - field string
+func (_e *MockIValkeyService_Expecter) Hget(ctx interface{}, key interface{}, field interface{}) *MockIValkeyService_Hget_Call {
+	return &MockIValkeyService_Hget_Call{Call: _e.mock.On("Hget", ctx, key, field)}
+}
+
+func (_c *MockIValkeyService_Hget_Call) Run(run func(ctx context.Context, key string, field string)) *MockIValkeyService_Hget_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIValkeyService_Hget_Call) Return(s string, err error) *MockIValkeyService_Hget_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *MockIValkeyService_Hget_Call) RunAndReturn(run func(ctx context.Context, key string, field string) (string, error)) *MockIValkeyService_Hget_Call {
 	_c.Call.Return(run)
 	return _c
 }

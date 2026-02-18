@@ -52,7 +52,13 @@ tasks:
   test:backend:
     dir: apps/backend
     cmds:
-      - go test ./... -cover
+      - gotestsum -f testdox -- -coverprofile=./coverage.out ./...
+
+  test:backend:cover:
+    dir: apps/backend
+    deps: [test:backend]
+    cmds:
+      - go tool cover -html=coverage.out
 
   # --- Development ---
   dev:
