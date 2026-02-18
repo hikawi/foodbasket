@@ -11,6 +11,7 @@ on:
   pull_request:
     paths:
       - apps/backend/**
+  workflow_dispatch:
 
 jobs:
   lint:
