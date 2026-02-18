@@ -54,11 +54,10 @@ tasks:
     cmds:
       - gotestsum -f testdox -- -coverprofile=./coverage.out $(go list ./... | grep -vE "/mocks|/postgres|/docs")
 
-  test:backend:cover:
+  test:backend:coverage:
     dir: apps/backend
-    deps: [test:backend]
     cmds:
-      - go tool cover -html=coverage.out
+      - gocovsh -sort-by-coverage
 
   # --- Development ---
   dev:

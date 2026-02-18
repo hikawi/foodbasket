@@ -30,7 +30,7 @@ func (s *PermissionService) GetUserPermissions(ctx context.Context, userID uuid.
 	// Check cache first.
 	key := constants.ValkeyPermissionsPrefix + tenantID.String() + ":" + userID.String()
 	perms, err := s.valkey.Smembers(ctx, key)
-	if err == nil && len(perms) > 0 {
+	if err == nil {
 		return perms, nil
 	}
 
@@ -40,14 +40,11 @@ func (s *PermissionService) GetUserPermissions(ctx context.Context, userID uuid.
 		TenantID: tenantID,
 	})
 	if err != nil {
+		_ = s.valkey.Sset(ctx, key, []string{}) // no permissions found
 		return nil, err
 	}
 
 	// Put in the cache.
-	err = s.valkey.Sset(ctx, key, perms)
-	if err != nil {
-		return nil, err
-	}
-
+	_ = s.valkey.Sset(ctx, key, perms)
 	return perms, err
 }

@@ -53,6 +53,50 @@ func TestVerifyPassword_UnsupportedAlgorithm(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestVerifyPassword_InvalidVersion(t *testing.T) {
+	randomSvc := services.NewRandomService()
+	passwordSvc := services.NewPasswordService(randomSvc)
+
+	hardcodedHash := "$argon2id$v=ABC$m=65536,t=1,p=4$salt$hash"
+	passwordToTest := "testPassword123"
+
+	_, err := passwordSvc.VerifyPassword(hardcodedHash, passwordToTest)
+	assert.Error(t, err)
+}
+
+func TestVerifyPassword_InvalidParameters(t *testing.T) {
+	randomSvc := services.NewRandomService()
+	passwordSvc := services.NewPasswordService(randomSvc)
+
+	hardcodedHash := "$argon2id$v=19$m=-W,t=ABC,p=4.5$salt$hash"
+	passwordToTest := "testPassword123"
+
+	_, err := passwordSvc.VerifyPassword(hardcodedHash, passwordToTest)
+	assert.Error(t, err)
+}
+
+func TestVerifyPassword_InvalidSalt(t *testing.T) {
+	randomSvc := services.NewRandomService()
+	passwordSvc := services.NewPasswordService(randomSvc)
+
+	hardcodedHash := "$argon2id$v=19$m=65536,t=1,p=4$SGV!@$hash"
+	passwordToTest := "testPassword123"
+
+	_, err := passwordSvc.VerifyPassword(hardcodedHash, passwordToTest)
+	assert.Error(t, err)
+}
+
+func TestVerifyPassword_InvalidHash(t *testing.T) {
+	randomSvc := services.NewRandomService()
+	passwordSvc := services.NewPasswordService(randomSvc)
+
+	hardcodedHash := "$argon2id$v=19$m=65536,t=1,p=4$salt$invalidHash@!"
+	passwordToTest := "testPassword123"
+
+	_, err := passwordSvc.VerifyPassword(hardcodedHash, passwordToTest)
+	assert.Error(t, err)
+}
+
 func TestVerifyPassword_Success(t *testing.T) {
 	randomSvc := services.NewRandomService()
 	passwordSvc := services.NewPasswordService(randomSvc)

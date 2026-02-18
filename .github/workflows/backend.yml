@@ -55,19 +55,24 @@ jobs:
           go-version-file: "./apps/backend/go.mod"
           cache-dependency-path: "apps/backend/go.sum"
 
-      - name: Setup dependencies
-        run: |
-          curl -1sLf 'https://dl.cloudsmith.io/public/task/task/setup.deb.sh' | sudo -E bash
-          sudo apt-get update
-          sudo apt-get install task
-
       - name: Setup Go dependencies
         working-directory: apps/backend
-        run: go install gotest.tools/gotestsum@latest
+        run: |
+          curl -1sLf 'https://dl.cloudsmith.io/public/task/task/setup.deb.sh' | sudo -E bash
+          sudo apt install task
+          go install gotest.tools/gotestsum@latest
 
       - name: Test
-        run: task test:backend:cover
-        working-directory: apps/backend
+        run: |
+          task test:backend
+
+      - name: Check Coverage
+        uses: vladopajic/go-test-coverage@v2
+        with:
+          profile: apps/backend/coverage.out
+          threshold-file: 80
+          threshold-package: 80
+          threshold-total: 95
 
   build:
     runs-on: ubuntu-latest
