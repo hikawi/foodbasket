@@ -52,7 +52,7 @@ tasks:
   test:backend:
     dir: apps/backend
     cmds:
-      - gotestsum -f testdox -- -coverprofile=./coverage.out ./...
+      - gotestsum -f testdox -- -coverprofile=./coverage.out $(go list ./... | grep -vE "/mocks|/postgres|/docs")
 
   test:backend:cover:
     dir: apps/backend

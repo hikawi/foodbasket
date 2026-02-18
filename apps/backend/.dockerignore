@@ -4,3 +4,4 @@ migrations
 atlas.hcl
 .mockery.yml
 tmp
+coverage.out
