@@ -13,17 +13,19 @@ const (
 	ValkeyTenantExists      = "foodbasket:registry:tenants:" // foodbasket:registry:tenants:<tenant_id>
 	ValkeyTenantUUID        = "foodbasket:tenants:uuid:"     // foodbasket:tenants:uuid
 	ValkeyPermissionsPrefix = "foodbasket:auth:perms:"       // foodbasket:auth:perms:<tenant_id>:<user_id>
-	ValkeySessionTTL        = 30 * time.Minute
 
-	ValkeyNilValue = "nil"
-	ValkeyCacheTTL = 5 * time.Minute
-	ValkeyBoolYes  = "true"
-	ValkeyBoolNo   = "false"
+	ValkeyNilValue   = "nil"
+	ValkeyCacheTTL   = 5 * time.Minute
+	ValkeySessionTTL = 30 * time.Minute
+	ValkeyBoolYes    = "true"
+	ValkeyBoolNo     = "false"
 )
 
 const (
-	valkeyTenantUUIDKey = "foodbasket:tenants:uuid:"
-	valkeyTenantSlugKey = "foodbasket:tenants:slug:"
+	valkeySessionKey      = "foodbasket:auth:sess:"
+	valkeySessionIndexKey = "foodbasket:auth:uidx:"
+	valkeyTenantUUIDKey   = "foodbasket:tenants:uuid:"
+	valkeyTenantSlugKey   = "foodbasket:tenants:slug:"
 )
 
 // Builds a key in Valkey that is used to map a tenant UUID -> hash set of variables,
@@ -40,4 +42,18 @@ func TenantUUIDKey(uuid string) string {
 // foodbasket:tenants:slug:<slug>
 func TenantSlugKey(slug string) string {
 	return valkeyTenantSlugKey + slug
+}
+
+// Builds a key in Valkey that is used to map a sessionID -> session data.
+//
+// foodbasket:auth:sess:<session_id>
+func SessionKey(sessionID string) string {
+	return valkeySessionKey + sessionID
+}
+
+// Builds a key in Valkey that is used to map a userID -> active sessions.
+//
+// foodbasket:auth:uidx:<user_id>
+func SessionIndexKey(userID string) string {
+	return valkeySessionIndexKey + userID
 }

@@ -50,11 +50,19 @@ tasks:
 
   # --- Testing ---
   test:backend:
+    desc: Test the Backend with gotestsum
     dir: apps/backend
     cmds:
       - gotestsum -f testdox -- -coverprofile=./coverage.out $(go list ./... | grep -vE "/mocks|/postgres|/docs")
 
+  test:backend:ci:
+    desc: (CI Only) Test Backend
+    dir: apps/backend
+    cmds:
+      - gotestsum -f github-actions -- -coverprofile=./coverage.out $(go list ./... | grep -vE "/mocks|/postgres|/docs")
+
   test:backend:coverage:
+    desc: Show Go backend Test Coverage
     dir: apps/backend
     cmds:
       - gocovsh -sort-by-coverage
