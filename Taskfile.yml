@@ -30,7 +30,7 @@ tasks:
   infra:
     desc: Start Docker containers (DB, Redis, Mailpit, etc.)
     cmds:
-      - docker compose up -d
+      - docker compose up
 
   infra:down:
     desc: Drop Docker containers
