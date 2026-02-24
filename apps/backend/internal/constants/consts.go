@@ -8,6 +8,9 @@ const (
 	CookieNameSessionID = "foodbasket_sessionid"
 	CookieSessionTTL    = 60 * time.Minute
 
+	ApplicationRootDomain = "foodbasket.app"
+	DefaultTenantID       = "default"
+
 	ValkeySessionPrefix     = "foodbasket:auth:sess:"        // foodbasket:auth:sess:<session_id>
 	ValkeyUserIndexPrefix   = "foodbasket:auth:uidx:"        // foodbasket:auth:uidx:<user_id>
 	ValkeyTenantExists      = "foodbasket:registry:tenants:" // foodbasket:registry:tenants:<tenant_id>

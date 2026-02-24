@@ -11,12 +11,13 @@ import (
 	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 	"luny.dev/foodbasket/internal/constants"
+	"luny.dev/foodbasket/internal/dto"
 	"luny.dev/foodbasket/internal/logging"
 	"luny.dev/foodbasket/internal/services"
 )
 
 // CORSMiddleware provides a dynamic CORS endpoint for browsers.
-func CORSMiddleware(valkey services.IValkeyService) echo.MiddlewareFunc {
+func CORSMiddleware(tenantSvc services.ITenantService) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
 			origin := c.Request().Header.Get(echo.HeaderOrigin)
@@ -29,7 +30,12 @@ func CORSMiddleware(valkey services.IValkeyService) echo.MiddlewareFunc {
 				return c.NoContent(http.StatusBadRequest)
 			}
 
-			_ = u.Hostname()
+			ctx := c.Request().Context()
+			host := u.Hostname()
+
+			if uuid, err := tenantSvc.GetTenantID(ctx, host); err != nil || uuid == nil {
+
+			}
 
 			// Check if there is a tenant with that hostname
 			//  TODO: Implement caching for tenant hosts to reduce round trips to Valkey
@@ -54,12 +60,13 @@ func CORSMiddleware(valkey services.IValkeyService) echo.MiddlewareFunc {
 }
 
 // HostHydrate populates the echo's context with the current host, just to make sure that
-// when SessionHydrate starts to look, permissions can be read from Valkey easily using tenant_id
-// using a key like foodbasket:auth:perms:tenant_id:user_id?
-func HostHydrate() echo.MiddlewareFunc {
+// when SessionHydrate starts to look, permissions can be read from Valkey easily using tenant_id.
+func HostHydrate(tenantSvc services.ITenantService) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
 			host := c.Request().Host
+			ctx := c.Request().Context()
+
 			if host == "" {
 				return echo.ErrBadRequest // Rare, but protect
 			}
@@ -69,31 +76,57 @@ func HostHydrate() echo.MiddlewareFunc {
 				host = forwarded
 			}
 
-			// Parse subdomain (assume format: [pos.]tenant.foodbasket.app)
+			// Parse subdomain (assume format: tenant.[pos.]foodbasket.app)
 			parts := strings.Split(host, ".")
-			if len(parts) < 3 { // Adjust based on your TLD
-				c.Set("tenant_id", "main") // Fallback hard-coded main's tenant.
+			c.Set("tenant_id", constants.DefaultTenantID)
+			if len(parts) < 3 {
+				// Not matched any of pos. or tenant.
 				return next(c)
 			}
 
-			subdomain := parts[0]
+			// Handle for cases of tenant.foodbasket.app.
+			// pos.foodbasket.app is special case, handle separately.
+			if len(parts) == 3 {
+				if strings.ToLower(parts[0]) == "pos" {
+					// TODO: Show a separate landing page for POS.
+					// Redirect to foodbasket.app
+					return c.JSON(http.StatusServiceUnavailable, dto.ErrorResponse{Error: "pos landing page not available yet"})
+				}
 
-			// TODO:
-			// I don't know what to do with domain spoofing in host yet.
-			// But I hope I can get it done somewhere soon. But seems OOS for this right now.
+				// It's a tenant's slug. We grab the UUID.
+				uuid, err := tenantSvc.GetTenantID(ctx, strings.ToLower(parts[0]))
+				if err != nil {
+					// Somehow there's an error
+					return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "unable to fetch tenant id"})
+				}
 
-			var tenantID string
-			isPOS := false
+				// Valid tenant ID, set the context
+				if uuid != nil {
+					c.Set("tenant_id", uuid.String())
+				}
 
-			if subdomain == "pos" && len(parts) >= 4 {
-				tenantID = parts[1]
-				isPOS = true
-			} else {
-				tenantID = subdomain
+				return next(c)
 			}
 
-			c.Set("tenant_id", tenantID)
-			c.Set("is_pos", isPOS)
+			// Handle for cases of tenant.pos.foodbasket.app
+			// len(parts) should be > 3 here.
+			if parts[1] != "pos" {
+				// We don't know tenant.whatever.foodbasket.app as valid. Ignore.
+				return next(c)
+			}
+
+			// Okay, now parts[0] should be the tenant id.
+			uuid, err := tenantSvc.GetTenantID(ctx, strings.ToLower(parts[0]))
+			if err != nil {
+				// Somehow there's an error
+				return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "unable to fetch tenant id"})
+			}
+
+			// Valid tenant ID, set the context
+			if uuid != nil {
+				c.Set("tenant_id", uuid.String())
+			}
+
 			return next(c)
 		}
 	}

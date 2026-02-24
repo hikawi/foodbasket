@@ -77,7 +77,7 @@ func (s *SessionService) CreateSession(ctx context.Context, data SessionData) (s
 			return "", err
 		}
 
-		key := constants.ValkeySessionPrefix + newID
+		key := constants.SessionKey(newID)
 		err = s.valkeyService.SetNx(ctx, key, string(jsonData), constants.ValkeySessionTTL)
 
 		if err == nil {
@@ -95,31 +95,36 @@ func (s *SessionService) CreateSession(ctx context.Context, data SessionData) (s
 	}
 
 	// Session created successful. Now we just log it inside a user index for "Logout all devices"
-	idxKey := constants.ValkeyUserIndexPrefix + *data.UserID
+	idxKey := constants.SessionIndexKey(*data.UserID)
 	_ = s.valkeyService.Sadd(ctx, idxKey, sessionID)
 	return sessionID, nil
 }
 
 func (s *SessionService) DeleteSession(ctx context.Context, sessionID string) error {
-	key := constants.ValkeySessionPrefix + sessionID
+	key := constants.SessionKey(sessionID)
 	sessString, err := s.valkeyService.Get(ctx, key)
 	var userID string
 
-	if err == nil {
-		var sess SessionData
-		err = json.Unmarshal([]byte(sessString), &sess)
-		if err == nil && sess.UserID != nil {
-			// Okay we successfully decoded it, we can now do this to get the user ID.
-			userID = *sess.UserID
-		}
+	if err != nil {
+		// nothing to delete
+		return nil
+	}
+
+	var sess SessionData
+	err = json.Unmarshal([]byte(sessString), &sess)
+	if err == nil && sess.UserID != nil {
+		// Okay we successfully decoded it, we can now do this to get the user ID.
+		userID = *sess.UserID
 	}
 
 	// Delete the session. I don't really mind if it failed here.
 	_ = s.valkeyService.Del(ctx, key)
 
 	// Remove from the user index.
-	idxKey := constants.ValkeyUserIndexPrefix + userID
-	_ = s.valkeyService.Sremove(ctx, idxKey, sessionID)
+	if userID != "" {
+		idxKey := constants.SessionIndexKey(userID)
+		_ = s.valkeyService.Sremove(ctx, idxKey, sessionID)
+	}
 	return nil
 }
 
