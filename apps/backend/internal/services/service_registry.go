@@ -9,4 +9,5 @@ type ServiceRegistry struct {
 	ValkeyService     IValkeyService
 	SessionService    ISessionService
 	PermissionService IPermissionService
+	TenantService     ITenantService
 }

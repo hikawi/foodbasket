@@ -2,3 +2,7 @@
 @import "@foodbasket/ui/theme.css";
 
 @source "node_modules/@foodbasket/ui";
+
+@theme {
+  --font-chiron: "Chiron GoRound TC";
+}

@@ -24,8 +24,8 @@ func (cv *CustomValidator) Validate(i any) error {
 func SetupServer(serviceRegistry services.ServiceRegistry) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.RemoveTrailingSlash(), middleware.Recover())
-	e.Use(handler.CORSMiddleware(serviceRegistry.ValkeyService))
-	e.Use(handler.HostHydrate())
+	e.Use(handler.CORSMiddleware(serviceRegistry.TenantService))
+	e.Use(handler.HostHydrate(serviceRegistry.TenantService))
 	e.Use(handler.SessionHydrate(serviceRegistry.SessionService))
 	e.Use(handler.PermissionHydrate(serviceRegistry.PermissionService))
 	e.Validator = &CustomValidator{validator: validator.New()}
