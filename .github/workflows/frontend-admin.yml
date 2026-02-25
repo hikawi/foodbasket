@@ -46,12 +46,13 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install Node dependencies
-        working-directory: apps/frontend-admin
-        run: pnpm i
+        run: pnpm i --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm --filter @foodbasket/ui build
 
       - name: Build
-        working-directory: apps/frontend-admin
-        run: pnpm build
+        run: pnpm --filter @foodbasket/admin build
 
   docker:
     runs-on: ubuntu-latest
@@ -76,8 +77,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          context: apps/frontend-admin
+          context: .
           platforms: linux/amd64
+          target: frontend-admin
           tags: |
             ghcr.io/hikawi/foodbasket-frontend-admin:latest
 

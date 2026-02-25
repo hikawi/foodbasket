@@ -1,0 +1,16 @@
+.dockerignore
+Dockerfile
+Caddyfile
+docker-compose.yml
+README.md
+Taskfile.yml
+.env
+.env.example
+node_modules
+docs
+**/node_modules
+dist
+.astro
+.vite
+.git
+.github
