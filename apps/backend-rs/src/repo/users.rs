@@ -1,9 +1,4 @@
 /*
-
--- name: CreateUser :one
-INSERT INTO users (name, email, password) VALUES ($1, $2, $3)
-RETURNING *;
-
 -- name: GetUserPermissions :many
 SELECT permissions.id FROM permissions
 INNER JOIN roles_permissions ON permissions.id = roles_permissions.permission_id
@@ -16,14 +11,29 @@ use sqlx::PgPool;
 
 use crate::models::User;
 
-pub async fn find_by_email(pool: &PgPool, email: &str) -> anyhow::Result<User> {
-    let user = sqlx::query_as!(
+pub async fn find_by_email(pool: &PgPool, email: &str) -> Result<User, sqlx::Error> {
+    sqlx::query_as!(
         User,
         r#"SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL"#,
         email
     )
     .fetch_one(pool)
-    .await?;
+    .await
+}
 
-    Ok(user)
+pub async fn create_user(
+    pool: &PgPool,
+    name: &str,
+    email: &str,
+    password: &str,
+) -> Result<User, sqlx::Error> {
+    sqlx::query_as!(
+        User,
+        r#"INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *"#,
+        name,
+        email,
+        password,
+    )
+    .fetch_one(pool)
+    .await
 }
