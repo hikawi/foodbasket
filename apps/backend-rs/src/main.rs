@@ -2,6 +2,7 @@ mod app;
 mod models;
 mod repo;
 mod routes;
+mod services;
 
 use std::sync::Arc;
 
@@ -12,7 +13,6 @@ use tower_http::trace::TraceLayer;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt::init();
     dotenv()?;
 
     // Load the stupid stuff up
