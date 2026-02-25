@@ -40,8 +40,7 @@ pub async fn check_user_credentials(
         })?;
 
     let pass = user.password.ok_or(UserError::DoesNotHavePassword)?;
-    let ok = services::passwords::verify(password, &pass)
-        .map_err(|e| UserError::UnexpectedError(e.into()))?;
+    let ok = services::passwords::verify(password, &pass).map_err(UserError::UnexpectedError)?;
     if !ok {
         return Err(UserError::WrongPassword);
     }
