@@ -19,10 +19,7 @@ async fn main() -> anyhow::Result<()> {
     let config = app::AppConfig::load()?;
     let pool = sqlx::PgPool::connect(&config.postgres_url).await?;
 
-    let state = Arc::new(app::AppState {
-        config: config,
-        db: pool,
-    });
+    let state = Arc::new(app::AppState { config, db: pool });
     let app = Router::new()
         .nest("/v1", routes::create_router())
         .layer(ServiceBuilder::new().layer(TraceLayer::new_for_http()))
