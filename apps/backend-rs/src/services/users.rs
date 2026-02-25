@@ -49,6 +49,14 @@ pub async fn check_user_credentials(
     Ok(())
 }
 
+/// Registers a new user.
+///
+/// Returns Ok(User) if it succeeded.
+///
+/// # Errors
+///
+/// - `UserError::AlreadyExists` if the user email was already taken.
+/// - `UserError::UnexpectedError(e)` if there was a db error.
 pub async fn register_user(
     pool: &PgPool,
     name: &str,
@@ -63,4 +71,31 @@ pub async fn register_user(
             Some(db_err) if db_err.is_unique_violation() => UserError::AlreadyExists,
             _ => UserError::UnexpectedError(e.into()),
         })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[sqlx::test(migrations = "./migrations")]
+    async fn test_register_user_success(pool: PgPool) {
+        let name = "Sakura";
+        let email = "sakura@foodbasket.app";
+        let pass = "password123";
+
+        let result = register_user(&pool, name, email, pass).await;
+
+        assert!(result.is_ok());
+        let user = result.unwrap();
+        assert_eq!(user.email, email);
+        assert!(user.password.is_some());
+    }
+
+    #[sqlx::test(migrations = "./migrations")]
+    async fn test_register_duplicate_email(pool: PgPool) {
+        let email = "dup@foodbasket.app";
+        register_user(&pool, "User 1", email, "pass").await.unwrap();
+        let result = register_user(&pool, "User 2", email, "pass").await;
+        assert!(matches!(result, Err(UserError::AlreadyExists)));
+    }
 }

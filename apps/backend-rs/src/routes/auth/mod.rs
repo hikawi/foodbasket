@@ -8,5 +8,7 @@ mod dto;
 mod handler;
 
 pub fn auth_routes() -> Router<Arc<AppState>> {
-    Router::new().route("/login", post(handler::login))
+    Router::new()
+        .route("/login", post(handler::login))
+        .route("/register", post(handler::register))
 }

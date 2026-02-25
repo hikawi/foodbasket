@@ -8,6 +8,7 @@ pub struct AppConfig {
 
 #[derive(Debug)]
 pub struct AppState {
+    #[allow(dead_code)]
     pub config: AppConfig,
     pub db: sqlx::PgPool,
 }

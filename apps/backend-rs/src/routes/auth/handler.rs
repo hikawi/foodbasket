@@ -6,58 +6,88 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use thiserror::Error;
 use validator::Validate;
 
 use crate::{
     app::AppState,
     models::dtos::{ErrorResponse, MessageResponse},
     routes::auth::dto::{LoginRequest, RegisterRequest},
-    services::users::{self, UserError},
+    services::{self, users::UserError},
 };
 
-pub async fn login(State(state): State<Arc<AppState>>, Json(body): Json<LoginRequest>) -> Response {
-    if let Err(e) = body.validate() {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse {
-                error: e.to_string(),
-            }),
-        )
-            .into_response();
-    }
+#[derive(Error, Debug)]
+pub enum AuthError {
+    #[error("bad request")]
+    BadRequest,
+    #[error("user not found")]
+    UserNotFound,
+    #[error("user does not have password")]
+    UserDoesNotHavePassword,
+    #[error("user already exists")]
+    UserAlreadyExists,
+    #[error("incorrect password")]
+    WrongPassword,
+    #[error("unknown")]
+    Unknown,
+}
 
-    match users::check_user_credentials(&state.db, &body.email, &body.password).await {
-        Ok(_) => (
-            StatusCode::OK,
-            Json(MessageResponse {
-                message: "ok".into(),
-            }),
-        )
-            .into_response(),
-        Err(UserError::NotFound) => (StatusCode::NOT_FOUND, "User is not found").into_response(),
-        Err(UserError::DoesNotHavePassword) => (
-            StatusCode::UNPROCESSABLE_ENTITY,
-            "User does not have password",
-        )
-            .into_response(),
-        Err(UserError::WrongPassword) => (StatusCode::FORBIDDEN, "Wrong password").into_response(),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Unknown Error").into_response(),
+impl IntoResponse for AuthError {
+    fn into_response(self) -> Response {
+        match self {
+            Self::BadRequest => {
+                (StatusCode::BAD_REQUEST, ErrorResponse::json("bad request")).into_response()
+            }
+            Self::WrongPassword => {
+                (StatusCode::FORBIDDEN, ErrorResponse::json("wrong password")).into_response()
+            }
+            Self::UserNotFound => {
+                (StatusCode::NOT_FOUND, ErrorResponse::json("unknown user")).into_response()
+            }
+            Self::UserDoesNotHavePassword => (
+                StatusCode::UNPROCESSABLE_ENTITY,
+                ErrorResponse::json("does not use password"),
+            )
+                .into_response(),
+            _ => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ErrorResponse::json("internal server error"),
+            )
+                .into_response(),
+        }
     }
+}
+
+pub async fn login(
+    State(state): State<Arc<AppState>>,
+    Json(body): Json<LoginRequest>,
+) -> Result<Json<MessageResponse>, AuthError> {
+    body.validate().map_err(|_| AuthError::BadRequest)?;
+
+    services::users::check_user_credentials(&state.db, &body.email, &body.password)
+        .await
+        .map_err(|e| match e {
+            UserError::NotFound => AuthError::UserNotFound,
+            UserError::DoesNotHavePassword => AuthError::UserDoesNotHavePassword,
+            UserError::WrongPassword => AuthError::WrongPassword,
+            _ => AuthError::Unknown,
+        })?;
+
+    Ok(MessageResponse::json("ok"))
 }
 
 pub async fn register(
     State(state): State<Arc<AppState>>,
     Json(body): Json<RegisterRequest>,
-) -> Response {
-    if let Err(e) = body.validate() {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse {
-                error: e.to_string(),
-            }),
-        )
-            .into_response();
-    }
+) -> Result<Json<MessageResponse>, AuthError> {
+    body.validate().map_err(|_| AuthError::BadRequest)?;
 
-    (StatusCode::OK, "test").into_response()
+    services::users::register_user(&state.db, &body.name, &body.email, &body.password)
+        .await
+        .map_err(|e| match e {
+            UserError::AlreadyExists => AuthError::UserAlreadyExists,
+            _ => AuthError::Unknown,
+        })?;
+
+    Ok(MessageResponse::json("yay"))
 }
