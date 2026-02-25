@@ -1,3 +1,7 @@
 packages:
-  - "apps/frontend-*"
-  - "packages/*"
+  - apps/frontend-*
+  - packages/*
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
