@@ -10,9 +10,8 @@ dotenv:
 tasks:
   # --- Setup Tasks ---
   install:
-    desc: Install all dependencies for Go and Vue
+    desc: Install all dependencies for Vue
     cmds:
-      - go mod download
       - for: { var: FRONTENDS }
         cmd: cd apps/{{.ITEM}} && pnpm install
 
@@ -50,10 +49,11 @@ tasks:
 
   # --- Testing ---
   test:backend:
-    desc: Test the Backend with gotestsum
-    dir: apps/backend
+    desc: Test the Backend
+    dir: apps/backend-rs
     cmds:
-      - gotestsum -f testdox -- -coverprofile=./coverage.out $(go list ./... | grep -vE "/mocks|/postgres|/docs")
+      - cargo test
+      # - gotestsum -f testdox -- -coverprofile=./coverage.out $(go list ./... | grep -vE "/mocks|/postgres|/docs")
 
   test:backend:ci:
     desc: (CI Only) Test Backend
@@ -73,9 +73,10 @@ tasks:
     deps: [infra, dev:backend, dev:frontends]
 
   dev:backend:
-    dir: apps/backend
+    name: Start the Backend in hot reload mode
+    dir: apps/backend-rs
     cmds:
-      - air
+      - cargo watch -x check -x run
 
   dev:frontends:
     desc: Start all Vue apps in parallel
@@ -87,6 +88,12 @@ tasks:
   generate:
     desc: Generate sqlc types and swaggo
     deps: [generate:sqlc, generate:swaggo, generate:mocks]
+
+  generate:migrations:
+    desc: Generate Atlas migrations
+    dir: apps/backend-rs
+    cmds:
+      - atlas migrate diff --env local --to "file://schema.sql"
 
   generate:mocks:
     desc: Generate GO mocks
@@ -106,6 +113,10 @@ tasks:
     cmds:
       - swag f
       - swag i
+
+  # -------------------------
+  # Docker stuff
+  # -------------------------
 
   build:ui:
     desc: Build packages/ui
