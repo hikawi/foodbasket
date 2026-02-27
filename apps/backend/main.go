@@ -32,6 +32,7 @@ func setupServices(q postgres.Querier, valkeyClient valkey.Client) services.Serv
 	sessionService := services.NewSessionService(valkeyService, randomService)
 	permissionService := services.NewPermissionService(q, valkeyService)
 	tenantService := services.NewTenantService(q, valkeyService)
+	timeService := services.NewTimeService()
 
 	return services.ServiceRegistry{
 		RandomService:     randomService,
@@ -41,6 +42,7 @@ func setupServices(q postgres.Querier, valkeyClient valkey.Client) services.Serv
 		SessionService:    sessionService,
 		PermissionService: permissionService,
 		TenantService:     tenantService,
+		TimeService:       timeService,
 	}
 }
 

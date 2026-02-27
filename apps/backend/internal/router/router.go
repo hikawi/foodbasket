@@ -21,6 +21,10 @@ func (cv *CustomValidator) Validate(i any) error {
 	return nil
 }
 
+func NewValidator() *CustomValidator {
+	return &CustomValidator{validator: validator.New()}
+}
+
 func SetupServer(serviceRegistry services.ServiceRegistry) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.RemoveTrailingSlash(), middleware.Recover())
@@ -37,6 +41,7 @@ func SetupRoutes(e *echo.Group, cfg app.AppConfig, serviceRegistry services.Serv
 	authHandler := handler.NewAuthHandler(
 		serviceRegistry.UserService,
 		serviceRegistry.SessionService,
+		serviceRegistry.TimeService,
 		cfg.CookieDomain,
 		cfg.CookieSecure,
 	)

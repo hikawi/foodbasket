@@ -90,14 +90,14 @@ func HostHydrate(tenantSvc services.ITenantService) echo.MiddlewareFunc {
 				if strings.ToLower(parts[0]) == "pos" {
 					// TODO: Show a separate landing page for POS.
 					// Redirect to foodbasket.app
-					return c.JSON(http.StatusServiceUnavailable, dto.ErrorResponse{Error: "pos landing page not available yet"})
+					return c.JSON(http.StatusServiceUnavailable, dto.MessageResponse{Message: "pos landing page not available yet"})
 				}
 
 				// It's a tenant's slug. We grab the UUID.
 				uuid, err := tenantSvc.GetTenantID(ctx, strings.ToLower(parts[0]))
 				if err != nil {
 					// Somehow there's an error
-					return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "unable to fetch tenant id"})
+					return c.JSON(http.StatusInternalServerError, dto.MessageResponse{Message: "unable to fetch tenant id"})
 				}
 
 				// Valid tenant ID, set the context
@@ -119,7 +119,7 @@ func HostHydrate(tenantSvc services.ITenantService) echo.MiddlewareFunc {
 			uuid, err := tenantSvc.GetTenantID(ctx, strings.ToLower(parts[0]))
 			if err != nil {
 				// Somehow there's an error
-				return c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "unable to fetch tenant id"})
+				return c.JSON(http.StatusInternalServerError, dto.MessageResponse{Message: "unable to fetch tenant id"})
 			}
 
 			// Valid tenant ID, set the context

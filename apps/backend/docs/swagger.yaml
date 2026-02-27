@@ -1,5 +1,10 @@
 basePath: /v1
 definitions:
+  dto.MessageResponse:
+    properties:
+      message:
+        type: string
+    type: object
   dto.PostRegisterBody:
     properties:
       email:
@@ -33,7 +38,27 @@ paths:
       - application/json
       description: Logins to an existing account if there is an account with that
         specific credentials.
-      responses: {}
+      responses:
+        "200":
+          description: Successfully logged in
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "400":
+          description: Invalid request body or invalid content type
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "404":
+          description: That email doesn't have an account
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "422":
+          description: User does not use a password to login
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
       summary: Logins to an existing account.
       tags:
       - authentication
