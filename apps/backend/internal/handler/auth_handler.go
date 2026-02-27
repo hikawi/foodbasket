@@ -2,8 +2,8 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
-	"time"
 
 	"github.com/labstack/echo/v5"
 	"luny.dev/foodbasket/internal/constants"
@@ -15,6 +15,7 @@ import (
 type AuthHandler struct {
 	userService    services.IUserService
 	sessionService services.ISessionService
+	timeService    services.ITimeService
 	cookieDomain   string
 	cookieSecure   bool
 }
@@ -22,12 +23,14 @@ type AuthHandler struct {
 func NewAuthHandler(
 	userService services.IUserService,
 	sessionService services.ISessionService,
+	timeService services.ITimeService,
 	cookieDomain string,
 	cookieSecure bool,
 ) *AuthHandler {
 	return &AuthHandler{
 		userService,
 		sessionService,
+		timeService,
 		cookieDomain,
 		cookieSecure,
 	}
@@ -36,7 +39,7 @@ func NewAuthHandler(
 func (h *AuthHandler) SetupRoutes(e *echo.Group) {
 	r := e.Group("/auth")
 
-	r.POST("/login", h.postLogin)
+	r.POST("/login", h.PostLogin)
 	r.POST("/register", h.postRegister)
 }
 
@@ -45,8 +48,14 @@ func (h *AuthHandler) SetupRoutes(e *echo.Group) {
 // @tags			authentication
 // @accept			json
 // @router			/auth/login [post]
-func (h *AuthHandler) postLogin(c *echo.Context) error {
+// @success		200	{object}	dto.MessageResponse	"Successfully logged in"
+// @failure		400	{object}	dto.MessageResponse	"Invalid request body or invalid content type"
+// @failure		404	{object}	dto.MessageResponse	"That email doesn't have an account"
+// @failure		422	{object}	dto.MessageResponse	"User does not use a password to login"
+// @failure		500	{object}	dto.MessageResponse	"Internal server error"
+func (h *AuthHandler) PostLogin(c *echo.Context) error {
 	var body dto.PostLoginBody
+	ctx := c.Request().Context()
 
 	if err := c.Bind(&body); err != nil {
 		logging.Error(c, "failed to bind body", "error", err.Error())
@@ -62,7 +71,46 @@ func (h *AuthHandler) postLogin(c *echo.Context) error {
 		return echo.ErrBadRequest.Wrap(err)
 	}
 
-	return c.JSON(200, map[string]any{"hello": "world"})
+	user, err := h.userService.CheckUserCredentials(ctx, body.Email, body.Password)
+	if err != nil {
+		if errors.Is(err, services.ErrUserNotFound) {
+			logging.Error(c, "user not found", "error", err.Error(), "body", loggableBody)
+			return echo.ErrNotFound.Wrap(err)
+		} else if errors.Is(err, services.ErrUserDoesNotUsePassword) {
+			logging.Error(c, "user does not use password", "error", err.Error(), "body", loggableBody)
+			return echo.NewHTTPError(http.StatusUnprocessableEntity, "User does not have a password").Wrap(err)
+		} else if errors.Is(err, services.ErrUserWrongPassword) {
+			logging.Error(c, "wrong password", "body", loggableBody)
+			return echo.ErrForbidden.Wrap(err)
+		} else {
+			logging.Error(c, "internal server error", "error", err.Error(), "body", loggableBody)
+			return echo.ErrInternalServerError.Wrap(err)
+		}
+	}
+
+	// Create a new session.
+	userID := user.ID.String()
+	userName := user.Name
+
+	sessionID, err := h.sessionService.CreateSession(ctx, services.SessionData{
+		UserID:    &userID,
+		Email:     &userName,
+		IsGuest:   false,
+		CreatedAt: h.timeService.Now(),
+	})
+	if err != nil {
+		return echo.ErrInternalServerError.Wrap(err)
+	}
+
+	c.SetCookie(&http.Cookie{
+		Name:     constants.CookieNameSessionID,
+		Value:    sessionID,
+		Domain:   h.cookieDomain,
+		Expires:  h.timeService.Now().Add(constants.CookieSessionTTL),
+		HttpOnly: true,
+		Secure:   h.cookieSecure,
+	})
+	return c.JSON(200, dto.MessageResponse{Message: "successfully logged in"})
 }
 
 // @summary		Registers an account.
@@ -105,7 +153,7 @@ func (h *AuthHandler) postRegister(c *echo.Context) error {
 		UserID:    &userID,
 		Email:     &userName,
 		IsGuest:   false,
-		CreatedAt: time.Now(),
+		CreatedAt: h.timeService.Now(),
 	})
 	if err != nil {
 		return echo.ErrInternalServerError.Wrap(err)
@@ -115,7 +163,7 @@ func (h *AuthHandler) postRegister(c *echo.Context) error {
 		Name:     constants.CookieNameSessionID,
 		Value:    sessionID,
 		Domain:   h.cookieDomain,
-		Expires:  time.Now().Add(constants.CookieSessionTTL),
+		Expires:  h.timeService.Now().Add(constants.CookieSessionTTL),
 		HttpOnly: true,
 		Secure:   h.cookieSecure,
 	})

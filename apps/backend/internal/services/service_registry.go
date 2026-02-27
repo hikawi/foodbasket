@@ -10,4 +10,5 @@ type ServiceRegistry struct {
 	SessionService    ISessionService
 	PermissionService IPermissionService
 	TenantService     ITenantService
+	TimeService       ITimeService
 }

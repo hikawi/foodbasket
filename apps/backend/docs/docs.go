@@ -33,7 +33,38 @@ const docTemplate = `{
                     "authentication"
                 ],
                 "summary": "Logins to an existing account.",
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "Successfully logged in",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or invalid content type",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "That email doesn't have an account",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "User does not use a password to login",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponse"
+                        }
+                    }
+                }
             }
         },
         "/auth/register": {
@@ -72,6 +103,14 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.MessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.PostRegisterBody": {
             "type": "object",
             "required": [

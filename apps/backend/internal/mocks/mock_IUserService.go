@@ -39,22 +39,22 @@ func (_m *MockIUserService) EXPECT() *MockIUserService_Expecter {
 }
 
 // CheckUserCredentials provides a mock function for the type MockIUserService
-func (_mock *MockIUserService) CheckUserCredentials(ctx context.Context, email string, password string) (bool, error) {
+func (_mock *MockIUserService) CheckUserCredentials(ctx context.Context, email string, password string) (postgres.User, error) {
 	ret := _mock.Called(ctx, email, password)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CheckUserCredentials")
 	}
 
-	var r0 bool
+	var r0 postgres.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (bool, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (postgres.User, error)); ok {
 		return returnFunc(ctx, email, password)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) postgres.User); ok {
 		r0 = returnFunc(ctx, email, password)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Get(0).(postgres.User)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
 		r1 = returnFunc(ctx, email, password)
@@ -100,12 +100,12 @@ func (_c *MockIUserService_CheckUserCredentials_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockIUserService_CheckUserCredentials_Call) Return(b bool, err error) *MockIUserService_CheckUserCredentials_Call {
-	_c.Call.Return(b, err)
+func (_c *MockIUserService_CheckUserCredentials_Call) Return(user postgres.User, err error) *MockIUserService_CheckUserCredentials_Call {
+	_c.Call.Return(user, err)
 	return _c
 }
 
-func (_c *MockIUserService_CheckUserCredentials_Call) RunAndReturn(run func(ctx context.Context, email string, password string) (bool, error)) *MockIUserService_CheckUserCredentials_Call {
+func (_c *MockIUserService_CheckUserCredentials_Call) RunAndReturn(run func(ctx context.Context, email string, password string) (postgres.User, error)) *MockIUserService_CheckUserCredentials_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -86,9 +86,24 @@ tasks:
   # --- Build & Types ---
   generate:
     desc: Generate sqlc types and swaggo
+    deps: [generate:sqlc, generate:swaggo, generate:mocks]
+
+  generate:mocks:
+    desc: Generate GO mocks
+    dir: apps/backend
+    cmds:
+      - mockery
+
+  generate:sqlc:
+    desc: Generate sqlc types
     dir: apps/backend
     cmds:
       - sqlc generate
+
+  generate:swaggo:
+    desc: Generate Swaggo routes
+    dir: apps/backend
+    cmds:
       - swag f
       - swag i
 
