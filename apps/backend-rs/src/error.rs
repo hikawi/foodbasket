@@ -4,20 +4,25 @@ use crate::{api::responses::ErrorResponse, routes::auth::AuthError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
-    #[error("Auth error: {0}")]
+    #[error(transparent)]
     Auth(#[from] AuthError),
+
     #[error(transparent)]
     Unknown(#[from] anyhow::Error),
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
-        let (status, message) = match self {
+        let (status, code, message) = match self {
             Self::Auth(e) => e.extract(),
-            Self::Unknown(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+            Self::Unknown(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "INTERNAL_SERVER_ERROR".into(),
+                e.to_string(),
+            ),
         };
 
-        tracing::error!(status = %status.as_u16(), message);
-        ErrorResponse::new(status, &message).into_response()
+        tracing::error!(code = %code, status = %status.as_u16(), message);
+        ErrorResponse::new(status, &code, &message).into_response()
     }
 }

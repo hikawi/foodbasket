@@ -12,21 +12,35 @@ pub struct MessageResponse {
 
 #[derive(Serialize)]
 pub struct ErrorResponse {
-    pub code: u16,
-    pub error: String,
+    pub status: u16,
+    pub code: String,
+    pub message: String,
 }
 
 impl ErrorResponse {
-    pub fn new(code: StatusCode, error: &str) -> Self {
+    pub fn new(status: StatusCode, code: &str, message: &str) -> Self {
         Self {
-            code: code.as_u16(),
-            error: error.into(),
+            status: status.as_u16(),
+            code: code.into(),
+            message: message.into(),
         }
     }
 }
 
 impl IntoResponse for ErrorResponse {
     fn into_response(self) -> Response {
-        return (StatusCode::from_u16(self.code).unwrap(), Json(self)).into_response();
+        if let Ok(status) = StatusCode::from_u16(self.status) {
+            (status, Json(self)).into_response()
+        } else {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Self::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "INTERNAL_SERVER_ERROR",
+                    "Failed to serialize error response",
+                ),
+            )
+                .into_response()
+        }
     }
 }
