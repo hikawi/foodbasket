@@ -66,7 +66,7 @@ pub async fn register_user(
     password: Option<&str>,
 ) -> Result<User, UserServiceError> {
     let hashed_password = password
-        .map(|p| services::passwords::hash(p))
+        .map(services::passwords::hash)
         .transpose()
         .map_err(|e| UserServiceError::UnknownError(anyhow::anyhow!(e)))?;
 

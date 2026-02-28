@@ -18,7 +18,7 @@ use crate::{
     services::{self, sessions::Session},
 };
 
-const SESSION_COOKIE_NAME: &'static str = "session_id";
+const SESSION_COOKIE_NAME: &str = "session_id";
 
 pub async fn login(
     cookies: Cookies,
@@ -103,7 +103,7 @@ pub async fn logout(
     let sess_id = cookies
         .get(SESSION_COOKIE_NAME)
         .map(|c| c.value().to_string()) // Map to String so we don't hold a reference
-        .ok_or(AuthError::Unauthenticated)?;
+        .ok_or(AuthError::Unauthenticated("Session not found".into()))?;
 
     services::sessions::delete(&state.cache, &sess_id)
         .await
@@ -125,11 +125,13 @@ pub async fn get_me(
     let sess_id = cookies
         .get(SESSION_COOKIE_NAME)
         .map(|c| c.value().to_string()) // Map to String so we don't hold a reference
-        .ok_or(AuthError::Unauthenticated)?;
+        .ok_or(AuthError::Unauthenticated(
+            "Session cookie not found".into(),
+        ))?;
 
     let session = services::sessions::get(&state.cache, &sess_id)
         .await
-        .map_err(|_| AuthError::Unauthenticated)?;
+        .map_err(|_| AuthError::Unauthenticated("Session not found".into()))?;
 
     Ok(Json(GetMeResponse {
         id: session

@@ -2,6 +2,7 @@ use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct User {
     pub id: Uuid,
     pub name: String,
