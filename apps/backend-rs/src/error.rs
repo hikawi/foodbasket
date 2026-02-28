@@ -1,20 +1,23 @@
-use axum::{Json, http::StatusCode, response::IntoResponse};
+use axum::{http::StatusCode, response::IntoResponse};
 
-use crate::api::responses::ErrorResponse;
+use crate::{api::responses::ErrorResponse, routes::auth::AuthError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
-    #[error("Unknown error: {0}")]
-    UnknownError(#[from] anyhow::Error),
+    #[error("Auth error: {0}")]
+    Auth(#[from] AuthError),
+    #[error(transparent)]
+    Unknown(#[from] anyhow::Error),
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
-        match self {
-            Self::UnknownError(e) => {
-                ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string())
-                    .into_response()
-            }
-        }
+        let (status, message) = match self {
+            Self::Auth(e) => e.extract(),
+            Self::Unknown(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+        };
+
+        tracing::error!(status = %status.as_u16(), message);
+        ErrorResponse::new(status, &message).into_response()
     }
 }
