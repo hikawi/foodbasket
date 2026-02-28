@@ -1,15 +1,17 @@
+-- Add migration script here
+
 ---
 --- Users
 ---
 
 CREATE TABLE users (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     email TEXT NOT NULL,
     password TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    deleted_at TIMESTAMPTZ
+    deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE UNIQUE INDEX idx_users_email_active ON users(email) WHERE (deleted_at IS NULL);
@@ -20,12 +22,12 @@ CREATE INDEX idx_users_deleted_at ON users(deleted_at);
 ---
 
 CREATE TABLE tenants (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     slug TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    deleted_at TIMESTAMPTZ
+    deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE UNIQUE INDEX idx_tenants_slug ON tenants(slug) WHERE (deleted_at IS NULL);
@@ -39,7 +41,7 @@ CREATE TABLE permissions (
     id TEXT PRIMARY KEY, -- Readable IDs like 'user:write'
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    deleted_at TIMESTAMPTZ
+    deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
 ---
@@ -47,12 +49,12 @@ CREATE TABLE permissions (
 ---
 
 CREATE TABLE roles (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     tenant_id UUID NOT NULL REFERENCES tenants(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    deleted_at TIMESTAMPTZ
+    deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE INDEX idx_roles_tenant_id ON roles(tenant_id);
