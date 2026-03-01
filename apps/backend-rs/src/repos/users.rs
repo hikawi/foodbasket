@@ -2,13 +2,13 @@ use sqlx::PgPool;
 
 use crate::models::User;
 
-pub async fn find_by_email(pool: &PgPool, email: &str) -> Result<User, sqlx::Error> {
+pub async fn find_by_email(pool: &PgPool, email: &str) -> Result<Option<User>, sqlx::Error> {
     sqlx::query_as!(
         User,
         "SELECT * FROM users WHERE lower(email) = $1 AND deleted_at IS NULL",
         email
     )
-    .fetch_one(pool)
+    .fetch_optional(pool)
     .await
 }
 
