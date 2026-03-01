@@ -20,64 +20,76 @@ pub enum UserServiceError {
     UnknownError(#[from] anyhow::Error),
 }
 
-/// Checks a user's inputted credentials and returns an `Ok(User)`
-/// if all checks passed.
-///
-/// # Errors
-///
-/// - `UserServiceError::UserNotFound` if the email could not be found, or deleted.
-/// - `UserServiceError::UserDoesNotUsePassword` if the user does not use password to authenticate.
-/// - `UserServiceError::WrongPassword` if the passwords didn't match what it verified.
-/// - `UserServiceError::UnknownError` if there was another unknown error.
-pub async fn check_user_credentials(
-    pool: &PgPool,
-    email: &str,
-    password: &str,
-) -> Result<User, UserServiceError> {
-    let user = repos::users::find_by_email(pool, email)
-        .await
-        .map_err(|e| match e {
-            sqlx::Error::RowNotFound => UserServiceError::UserNotFound,
-            _ => UserServiceError::UnknownError(anyhow::anyhow!(e)),
-        })?;
-
-    let hash = user
-        .password
-        .as_deref()
-        .ok_or(UserServiceError::UserDoesNotUsePassword)?;
-
-    if !services::passwords::verify(password, hash) {
-        return Err(UserServiceError::WrongPassword);
-    }
-
-    Ok(user)
+pub struct UserService {
+    pool: PgPool,
 }
 
-/// Registers a new user and returns an `Ok(User)` if it succeeded.
-///
-/// # Errors
-///
-/// - `UserServiceError::UserAlreadyExists` if the user already existed.
-/// - `UserServiceError::UnknownError` if there was an unexpected error.
-pub async fn register_user(
-    pool: &PgPool,
-    name: &str,
-    email: &str,
-    password: Option<&str>,
-) -> Result<User, UserServiceError> {
-    let hashed_password = password
-        .map(services::passwords::hash)
-        .transpose()
-        .map_err(|e| UserServiceError::UnknownError(anyhow::anyhow!(e)))?;
+impl From<sqlx::Error> for UserServiceError {
+    fn from(value: sqlx::Error) -> Self {
+        match value.as_database_error() {
+            Some(db_err) if db_err.is_unique_violation() => Self::UserAlreadyExists,
+            _ => Self::UnknownError(anyhow::Error::new(value)),
+        }
+    }
+}
 
-    let user = repos::users::create_user(pool, name, email, hashed_password.as_deref())
-        .await
-        .map_err(|e| match e.as_database_error() {
-            Some(db_err) if db_err.is_unique_violation() => UserServiceError::UserAlreadyExists,
-            _ => UserServiceError::UnknownError(anyhow::anyhow!(e)),
-        })?;
+impl UserService {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
 
-    Ok(user)
+    /// Checks a user's inputted credentials and returns an `Ok(User)`
+    /// if all checks passed.
+    ///
+    /// # Errors
+    ///
+    /// - `UserServiceError::UserNotFound` if the email could not be found, or deleted.
+    /// - `UserServiceError::UserDoesNotUsePassword` if the user does not use password to authenticate.
+    /// - `UserServiceError::WrongPassword` if the passwords didn't match what it verified.
+    /// - `UserServiceError::UnknownError` if there was another unknown error.
+    pub async fn check_user_credentials(
+        &self,
+        email: &str,
+        password: &str,
+    ) -> Result<User, UserServiceError> {
+        let user = repos::users::find_by_email(&self.pool, email)
+            .await?
+            .ok_or(UserServiceError::UserNotFound)?;
+
+        let hash = user
+            .password
+            .as_deref()
+            .ok_or(UserServiceError::UserDoesNotUsePassword)?;
+
+        if !services::passwords::verify(password, hash) {
+            return Err(UserServiceError::WrongPassword);
+        }
+
+        Ok(user)
+    }
+
+    /// Registers a new user and returns an `Ok(User)` if it succeeded.
+    ///
+    /// # Errors
+    ///
+    /// - `UserServiceError::UserAlreadyExists` if the user already existed.
+    /// - `UserServiceError::UnknownError` if there was an unexpected error.
+    pub async fn register_user(
+        &self,
+        name: &str,
+        email: &str,
+        password: Option<&str>,
+    ) -> Result<User, UserServiceError> {
+        let hashed_password = password
+            .map(services::passwords::hash)
+            .transpose()
+            .map_err(|e| UserServiceError::UnknownError(anyhow::anyhow!(e)))?;
+
+        let user =
+            repos::users::create_user(&self.pool, name, email, hashed_password.as_deref()).await?;
+
+        Ok(user)
+    }
 }
 
 #[cfg(test)]
@@ -89,7 +101,8 @@ mod tests {
         let test_email = "test@foodbasket.app";
         let raw_password = "password123";
 
-        let result = check_user_credentials(&pool, test_email, raw_password).await;
+        let svc = UserService::new(pool);
+        let result = svc.check_user_credentials(test_email, raw_password).await;
 
         assert!(result.is_err());
         assert!(matches!(result, Err(UserServiceError::UserNotFound)));
@@ -112,7 +125,8 @@ mod tests {
         .await
         .unwrap();
 
-        let result = check_user_credentials(&pool, test_email, raw_password).await;
+        let svc = UserService::new(pool);
+        let result = svc.check_user_credentials(test_email, raw_password).await;
 
         assert!(result.is_ok());
         let user = result.unwrap();
@@ -136,7 +150,10 @@ mod tests {
         .await
         .unwrap();
 
-        let result = register_user(&pool, "Test User", test_email, Some(raw_password)).await;
+        let svc = UserService::new(pool);
+        let result = svc
+            .register_user("Test User", test_email, Some(raw_password))
+            .await;
 
         assert!(result.is_err());
         assert!(matches!(result, Err(UserServiceError::UserAlreadyExists)))
@@ -147,7 +164,10 @@ mod tests {
         let test_email = "test@foodbasket.app";
         let raw_password = "password123";
 
-        let result = register_user(&pool, "Test User", test_email, Some(raw_password)).await;
+        let svc = UserService::new(pool);
+        let result = svc
+            .register_user("Test User", test_email, Some(raw_password))
+            .await;
 
         assert!(result.is_ok());
 

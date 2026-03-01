@@ -1,10 +1,12 @@
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use axum::Router;
 use fred::prelude::{ClientLike, TcpConfig};
 use tokio::net::TcpListener;
 use tower_cookies::CookieManagerLayer;
 use tracing_subscriber::EnvFilter;
+
+use crate::services::{SessionService, TenantService, UserService};
 
 mod api;
 mod app;
@@ -42,10 +44,18 @@ async fn main() -> anyhow::Result<()> {
         .build()?;
     cache_client.init().await?;
 
+    // Setup list of services.
+    let session_service = SessionService::new(cache_client.clone());
+    let user_service = UserService::new(pool.clone());
+    let tenant_service = TenantService::new(pool.clone(), cache_client.clone());
+
     let state = app::AppState {
-        config: cfg,
+        config: Arc::new(cfg),
         db: pool,
         cache: cache_client,
+        tenant_service: Arc::new(tenant_service),
+        session_service: Arc::new(session_service),
+        user_service: Arc::new(user_service),
     };
 
     let app = Router::new()

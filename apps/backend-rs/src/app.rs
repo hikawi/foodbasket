@@ -1,6 +1,11 @@
-use fred::prelude::Client as CacheClient;
+use std::sync::Arc;
 
-#[derive(Clone)]
+use axum::extract::FromRef;
+use fred::prelude::Client as CacheClient;
+use sqlx::PgPool;
+
+use crate::services::{SessionService, TenantService, UserService};
+
 pub struct AppConfig {
     pub db_url: String,
     pub cache_url: String,
@@ -10,9 +15,13 @@ pub struct AppConfig {
 
 #[derive(Clone)]
 pub struct AppState {
-    pub config: AppConfig,
-    pub db: sqlx::PgPool,
+    pub config: Arc<AppConfig>,
+    pub db: PgPool,
     pub cache: CacheClient,
+
+    pub session_service: Arc<SessionService>,
+    pub tenant_service: Arc<TenantService>,
+    pub user_service: Arc<UserService>,
 }
 
 impl AppConfig {
@@ -26,5 +35,40 @@ impl AppConfig {
                 .expect("COOKIE_SECURE variable not set")
                 .parse::<bool>()?,
         })
+    }
+}
+
+impl FromRef<AppState> for Arc<AppConfig> {
+    fn from_ref(input: &AppState) -> Self {
+        input.config.clone()
+    }
+}
+
+impl FromRef<AppState> for PgPool {
+    fn from_ref(input: &AppState) -> Self {
+        input.db.clone()
+    }
+}
+
+impl FromRef<AppState> for CacheClient {
+    fn from_ref(input: &AppState) -> Self {
+        input.cache.clone()
+    }
+}
+
+impl FromRef<AppState> for Arc<TenantService> {
+    fn from_ref(input: &AppState) -> Self {
+        input.tenant_service.clone()
+    }
+}
+
+impl FromRef<AppState> for Arc<SessionService> {
+    fn from_ref(input: &AppState) -> Self {
+        input.session_service.clone()
+    }
+}
+impl FromRef<AppState> for Arc<UserService> {
+    fn from_ref(input: &AppState) -> Self {
+        input.user_service.clone()
     }
 }
