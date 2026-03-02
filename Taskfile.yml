@@ -57,6 +57,7 @@ tasks:
   test:backend:
     desc: Test the Backend
     cmds:
+      - cargo sqlx prepare --workspace
       - cargo test --workspace
 
   test:backend:ci:

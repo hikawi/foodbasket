@@ -59,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let app = Router::new()
-        .nest("/v1", routes::main_routes())
+        .nest("/v1", routes::main_routes(state.clone()))
         .layer(CookieManagerLayer::new())
         .with_state(state);
 

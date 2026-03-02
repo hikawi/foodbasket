@@ -137,3 +137,161 @@ impl TenantService {
         Ok(exists)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use chrono::Utc;
+    use fred::{mocks::SimpleMap, prelude::ClientLike};
+
+    use crate::models::Tenant;
+
+    use super::*;
+
+    fn setup_mock_client() -> fred::prelude::Client {
+        let mock_cache = SimpleMap::new();
+
+        let config = fred::prelude::Config {
+            mocks: Some(Arc::new(mock_cache)),
+            ..fred::prelude::Config::default()
+        };
+        let cache_client = fred::prelude::Client::new(config, None, None, None);
+        cache_client.connect();
+
+        cache_client
+    }
+
+    #[sqlx::test]
+    async fn test_get_id_by_slug_not_found(pool: PgPool) -> anyhow::Result<()> {
+        let cache_client = setup_mock_client();
+
+        let _ = cache_client
+            .set::<(), _, _>(cache_keys::tenant_slug("test"), "NF", None, None, false)
+            .await?;
+
+        let service = TenantService::new(pool, cache_client);
+        let uuid = service.get_id_by_slug("test").await;
+        assert!(matches!(uuid, Ok(None)));
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_get_id_by_slug_bad_uuid(pool: PgPool) -> anyhow::Result<()> {
+        let cache_client = setup_mock_client();
+
+        let _ = cache_client
+            .set::<(), _, _>(cache_keys::tenant_slug("test"), "lol", None, None, false)
+            .await?;
+
+        let service = TenantService::new(pool, cache_client);
+        let uuid = service.get_id_by_slug("test").await;
+        assert!(matches!(uuid, Err(TenantServiceError::UuidError)));
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_get_id_by_slug_cache_hit(pool: PgPool) -> anyhow::Result<()> {
+        let cache_client = setup_mock_client();
+
+        let uuid = Uuid::new_v4();
+        let _ = cache_client
+            .set::<(), _, _>(
+                cache_keys::tenant_slug("test"),
+                uuid.to_string(),
+                None,
+                None,
+                false,
+            )
+            .await?;
+
+        let service = TenantService::new(pool, cache_client);
+        let result = service.get_id_by_slug("test").await;
+        assert!(matches!(result, Ok(Some(_))));
+        assert_eq!(result.unwrap().unwrap(), uuid);
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_get_id_by_slug_cache_miss(pool: PgPool) -> anyhow::Result<()> {
+        let cache_client = setup_mock_client();
+        let service = TenantService::new(pool.clone(), cache_client);
+
+        let test_tenant = Tenant {
+            id: Uuid::new_v4(),
+            name: "test".into(),
+            slug: "test".into(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            deleted_at: None,
+        };
+
+        sqlx::query!(
+            "INSERT INTO tenants (id, name, slug) VALUES ($1, $2, $3)",
+            &test_tenant.id,
+            &test_tenant.name,
+            &test_tenant.slug
+        )
+        .execute(&pool)
+        .await?;
+
+        let opt = service.get_id_by_slug("test").await?;
+        assert!(opt.is_some());
+        assert_eq!(opt.unwrap(), test_tenant.id);
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_is_tenant_cache_hit(pool: PgPool) -> anyhow::Result<()> {
+        let test_tenant = Tenant {
+            id: Uuid::new_v4(),
+            name: "test".into(),
+            slug: "test".into(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            deleted_at: None,
+        };
+
+        let cache_client = setup_mock_client();
+        let _ = cache_client
+            .set::<(), _, _>(
+                cache_keys::tenant_uuid(&test_tenant.id.to_string()),
+                "true",
+                None,
+                None,
+                false,
+            )
+            .await?;
+
+        let service = TenantService::new(pool.clone(), cache_client);
+
+        let opt = service.is_tenant(test_tenant.id).await?;
+        assert!(opt);
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_is_tenant_cache_miss(pool: PgPool) -> anyhow::Result<()> {
+        let test_tenant = Tenant {
+            id: Uuid::new_v4(),
+            name: "test".into(),
+            slug: "test".into(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            deleted_at: None,
+        };
+
+        let cache_client = setup_mock_client();
+        let service = TenantService::new(pool.clone(), cache_client);
+
+        let opt = service.is_tenant(test_tenant.id).await?;
+        assert!(!opt);
+
+        Ok(())
+    }
+}

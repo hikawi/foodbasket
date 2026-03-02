@@ -1169,6 +1169,7 @@ dependencies = [
  "tower-cookies",
  "tracing",
  "tracing-subscriber",
+ "url",
  "utoipa",
  "utoipa-swagger-ui",
  "uuid",
