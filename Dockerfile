@@ -3,6 +3,7 @@
 # Intermediate targets:
 # - node-base: pnpm-enabled version of node 24
 # - node-deps: installed deps of node
+# - rust-base: rust 1.93
 # - node-builder: built version of @foodbasket/ui and @foodbasket/types
 # Final targets:
 # - frontend-pos (SPA)
@@ -15,6 +16,10 @@
 FROM node:24-alpine AS node-base
 WORKDIR /app
 RUN corepack enable pnpm
+
+# --------------------
+
+FROM rust:1-slim AS rust-base
 
 # --------------------
 
@@ -115,3 +120,20 @@ COPY --from=frontend-tenant-builder /app/apps/frontend-tenant/package.json ./app
 EXPOSE 3000
 
 CMD ["node", "apps/frontend-tenant/dist/server/entry.mjs"]
+
+# --------------------
+
+FROM rust-base AS backend-builder
+WORKDIR /app
+ENV SQLX_OFFLINE=true
+RUN apt-get update && apt-get install curl -y
+COPY Cargo.lock Cargo.toml ./
+COPY ./apps/backend-rs/ ./apps/backend-rs
+COPY .sqlx ./.sqlx
+RUN cargo build --release
+
+FROM gcr.io/distroless/cc-debian13:latest AS backend
+WORKDIR /app
+COPY --from=backend-builder /app/target/release/foodbasket /app/foodbasket
+CMD ["/app/foodbasket"]
+
