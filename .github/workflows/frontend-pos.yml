@@ -8,6 +8,8 @@ on:
   push:
     paths:
       - apps/frontend-pos/**
+    branches:
+      - main
   pull_request:
     paths:
       - apps/frontend-pos/**
@@ -57,7 +59,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     name: Docker Build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: ["build"]
     steps:
       - name: Checkout
@@ -87,7 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy
     needs: ["docker"]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     concurrency:
       group: "frontend-pos"
       cancel-in-progress: false
