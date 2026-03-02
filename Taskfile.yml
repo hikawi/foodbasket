@@ -74,7 +74,7 @@ tasks:
 
   dev:backend:
     desc: Start the Backend in hot reload mode
-    dir: apps/backend-rs
+    dir: apps/backend
     cmds:
       - cargo watch -x check -x run
 
@@ -87,29 +87,29 @@ tasks:
   # Docker stuff
   # -------------------------
 
-  build:ui:
-    desc: Build packages/ui
-    cmds:
-      - pnpm --filter @foodbasket/ui build
-
-  build:backend:
-    desc: Run docker build on backend
-    dir: apps/backend
-    cmds:
-      - docker build -t foodbasket-backend .
-
-  build:home:
-    desc: Run docker build on frontend-home
-    dir: apps/frontend-home
-    cmds:
-      - docker build -t foodbasket-frontend-home .
-
-  build:tenant:
-    desc: Run docker build on frontend-tenant
-    dir: apps/frontend-tenant
-    cmds:
-      - docker build -t foodbasket-frontend-tenant .
-
-  build:
-    desc: Build Dockerfiles
-    deps: [build:backend, build:home, build:tenant]
+  # build:ui:
+  #   desc: Build packages/ui
+  #   cmds:
+  #     - pnpm --filter @foodbasket/ui build
+  #
+  # build:backend:
+  #   desc: Run docker build on backend
+  #   dir: apps/backend
+  #   cmds:
+  #     - docker build -t foodbasket-backend .
+  #
+  # build:home:
+  #   desc: Run docker build on frontend-home
+  #   dir: apps/frontend-home
+  #   cmds:
+  #     - docker build -t foodbasket-frontend-home .
+  #
+  # build:tenant:
+  #   desc: Run docker build on frontend-tenant
+  #   dir: apps/frontend-tenant
+  #   cmds:
+  #     - docker build -t foodbasket-frontend-tenant .
+  #
+  # build:
+  #   desc: Build Dockerfiles
+  #   deps: [build:backend, build:home, build:tenant]
