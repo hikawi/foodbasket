@@ -57,14 +57,15 @@ tasks:
   test:backend:
     desc: Test the Backend
     cmds:
-      - cargo sqlx prepare --workspace
+      - cargo sqlx prepare --workspace -- --all-targets --all-features
       - cargo test --workspace
 
   test:backend:ci:
     desc: (CI Only) Test Backend
-    dir: apps/backend
+    env:
+      SQLX_OFFLINE: true
     cmds:
-      - gotestsum -f github-actions -- -coverprofile=./coverage.out $(go list ./... | grep -vE "/mocks|/postgres|/docs")
+      - cargo test --workspace
 
   # --- Development ---
   dev:
