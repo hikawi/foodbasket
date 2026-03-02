@@ -20,7 +20,7 @@ mod services;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Envs
-    dotenvy::dotenv()?;
+    let _ = dotenvy::dotenv();
 
     // Logging
     tracing_subscriber::fmt()
