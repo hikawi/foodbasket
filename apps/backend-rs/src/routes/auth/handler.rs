@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::{
-    Json,
+    Extension, Json,
     extract::{State, rejection::JsonRejection},
 };
 use chrono::Utc;
@@ -13,9 +13,12 @@ use crate::{
     api::responses::MessageResponse,
     app::AppConfig,
     error::AppError,
-    routes::auth::{
-        AuthError,
-        dtos::{GetMeResponse, PostLoginRequest, PostRegisterRequest},
+    routes::{
+        auth::{
+            AuthError,
+            dtos::{GetMeResponse, PostLoginRequest, PostRegisterRequest},
+        },
+        extract::SessionContext,
     },
     services::{SessionService, UserService, sessions::Session},
 };
@@ -130,28 +133,20 @@ pub async fn logout(
 }
 
 pub async fn get_me(
-    cookies: Cookies,
-    State(session_service): State<Arc<SessionService>>,
+    Extension(session): Extension<SessionContext>,
 ) -> Result<Json<GetMeResponse>, AppError> {
-    let sess_id = cookies
-        .get(SESSION_COOKIE_NAME)
-        .map(|c| c.value().to_string()) // Map to String so we don't hold a reference
-        .ok_or(AuthError::Unauthenticated(
-            "Session cookie not found".into(),
-        ))?;
-
-    let session = session_service
-        .get(&sess_id)
-        .await
-        .map_err(|_| AuthError::Unauthenticated("Session not found".into()))?;
-
-    Ok(Json(GetMeResponse {
-        id: session
-            .user_id
-            .ok_or(AuthError::Unknown(anyhow::anyhow!("No user name")))?
-            .to_string(),
-        email: session
-            .user_email
-            .ok_or(AuthError::Unknown(anyhow::anyhow!("No user email")))?,
-    }))
+    match session {
+        SessionContext::Authenticated(sess) => Ok(Json(GetMeResponse {
+            id: sess
+                .user_id
+                .ok_or(AuthError::Unknown(anyhow::anyhow!("No user name")))?
+                .to_string(),
+            email: sess
+                .user_email
+                .clone()
+                .ok_or(AuthError::Unknown(anyhow::anyhow!("No user email")))?
+                .to_string(),
+        })),
+        SessionContext::Anonymous => Err(AuthError::Unauthenticated("Session not found".into()))?,
+    }
 }

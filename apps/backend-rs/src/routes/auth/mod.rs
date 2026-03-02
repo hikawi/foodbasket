@@ -55,7 +55,7 @@ impl AuthError {
 impl From<SessionServiceError> for AuthError {
     fn from(value: SessionServiceError) -> Self {
         match value {
-            SessionServiceError::UnknownError(e) => AuthError::Unknown(e),
+            SessionServiceError::Unknown(e) => AuthError::Unknown(e),
             _ => AuthError::Unknown(anyhow::anyhow!(value)),
         }
     }

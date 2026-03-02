@@ -3,6 +3,7 @@ use utoipa::ToSchema;
 use validator::Validate;
 
 #[derive(Deserialize, Validate)]
+#[serde(rename_all = "camelCase")]
 pub struct PostLoginRequest {
     #[validate(email(message = "Must be a valid email address"))]
     pub email: String,
@@ -11,6 +12,7 @@ pub struct PostLoginRequest {
 }
 
 #[derive(Deserialize, Validate, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct PostRegisterRequest {
     #[validate(length(min = 2, message = "Must be at least 2 characters"))]
     pub name: String,
@@ -21,6 +23,7 @@ pub struct PostRegisterRequest {
 }
 
 #[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct GetMeResponse {
     pub id: String,
     pub email: String,

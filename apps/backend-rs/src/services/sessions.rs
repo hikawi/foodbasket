@@ -14,8 +14,10 @@ const SESS_CACHE_TTL: i64 = 60 * 1000;
 pub enum SessionServiceError {
     #[error("No session found")]
     NoSessionFound,
+    #[error("Invalid JSON format for session: {0}")]
+    MalformedJson(#[from] serde_json::Error),
     #[error(transparent)]
-    UnknownError(#[from] anyhow::Error),
+    Unknown(#[from] anyhow::Error),
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -32,13 +34,7 @@ pub struct SessionService {
 
 impl From<fred::prelude::Error> for SessionServiceError {
     fn from(value: fred::prelude::Error) -> Self {
-        Self::UnknownError(anyhow::Error::new(value))
-    }
-}
-
-impl From<serde_json::Error> for SessionServiceError {
-    fn from(value: serde_json::Error) -> Self {
-        Self::UnknownError(anyhow::Error::new(value))
+        Self::Unknown(anyhow::Error::new(value))
     }
 }
 
@@ -110,6 +106,142 @@ impl SessionService {
     pub async fn delete(&self, id: &str) -> Result<(), SessionServiceError> {
         let key = cache_keys::session(id);
         self.client.del::<(), _>(&key).await?;
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use super::*;
+    use fred::{
+        mocks::SimpleMap,
+        prelude::{Client, ClientLike},
+    };
+
+    fn setup_mock_client() -> Client {
+        let mock_cache = SimpleMap::new();
+
+        let config = fred::prelude::Config {
+            mocks: Some(Arc::new(mock_cache)),
+            ..fred::prelude::Config::default()
+        };
+        let cache_client = fred::prelude::Client::new(config, None, None, None);
+        cache_client.connect();
+
+        cache_client
+    }
+
+    #[tokio::test]
+    async fn test_get_no_session() -> anyhow::Result<()> {
+        let client = setup_mock_client();
+
+        let service = SessionService::new(client);
+        let session = service.get("test").await;
+        assert!(matches!(session, Err(SessionServiceError::NoSessionFound)));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_session_bad_json() -> anyhow::Result<()> {
+        let client = setup_mock_client();
+        let _ = client
+            .set::<(), _, _>(cache_keys::session("test"), "{\"wee}", None, None, false)
+            .await;
+
+        let service = SessionService::new(client);
+        let session = service.get("test").await;
+        assert!(matches!(
+            session,
+            Err(SessionServiceError::MalformedJson(_))
+        ));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_session_success() -> anyhow::Result<()> {
+        let client = setup_mock_client();
+        let _ = client
+            .set::<(), _, _>(
+                cache_keys::session("test"),
+                r#"{"userId":null,"userEmail":"testemail@foodbasket.app","createdAt":"2026-03-02T14:30:54.718755750Z"}"#,
+                None,
+                None,
+                false,
+            )
+            .await;
+
+        let service = SessionService::new(client);
+        let session = service.get("test").await;
+        assert!(matches!(session, Ok(_)));
+        assert_eq!(
+            session.unwrap().user_email.unwrap(),
+            "testemail@foodbasket.app"
+        );
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_set_session_success() -> anyhow::Result<()> {
+        let client = setup_mock_client();
+        let session = Session {
+            user_id: Some(Uuid::new_v4()),
+            user_email: Some("test@foodbasket.app".into()),
+            created_at: Utc::now(),
+        };
+
+        let service = SessionService::new(client);
+        service.set("test", &session).await?;
+        let returned_sess = service.get("test").await?;
+
+        assert_eq!(returned_sess.user_id, session.user_id);
+        assert_eq!(returned_sess.user_email, session.user_email);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_create_session_success() -> anyhow::Result<()> {
+        let client = setup_mock_client();
+        let session = Session {
+            user_id: Some(Uuid::new_v4()),
+            user_email: Some("test@foodbasket.app".into()),
+            created_at: Utc::now(),
+        };
+
+        let service = SessionService::new(client);
+        let id = service.create(&session).await?;
+        let returned_sess = service.get(&id).await?;
+
+        assert_eq!(returned_sess.user_id, session.user_id);
+        assert_eq!(returned_sess.user_email, session.user_email);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_delete_session_success() -> anyhow::Result<()> {
+        let client = setup_mock_client();
+        let _ = client
+            .set::<(), _, _>(
+                cache_keys::session("test"),
+                r#"{"userId":null,"userEmail":"testemail@foodbasket.app","createdAt":"2026-03-02T14:30:54.718755750Z"}"#,
+                None,
+                None,
+                false,
+            )
+            .await;
+
+        let service = SessionService::new(client);
+        service.delete("test").await?;
+        let sess = service.get("test").await;
+
+        assert!(matches!(sess, Err(SessionServiceError::NoSessionFound)));
+
         Ok(())
     }
 }
