@@ -128,7 +128,7 @@ WORKDIR /app
 ENV SQLX_OFFLINE=true
 RUN apt-get update && apt-get install curl -y
 COPY Cargo.lock Cargo.toml ./
-COPY ./apps/backend-rs/ ./apps/backend-rs
+COPY ./apps/backend/ ./apps/backend
 COPY .sqlx ./.sqlx
 RUN cargo build --release
 
