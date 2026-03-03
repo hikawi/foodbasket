@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use validator::Validate;
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PostLoginRequest {
     #[validate(email(message = "Must be a valid email address"))]

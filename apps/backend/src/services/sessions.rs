@@ -3,6 +3,7 @@ use fred::prelude::Client as CacheClient;
 use fred::prelude::KeysInterface;
 use fred::types::Expiration;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::cache_keys;
@@ -20,7 +21,7 @@ pub enum SessionServiceError {
     Unknown(#[from] anyhow::Error),
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Session {
     pub user_id: Option<Uuid>,

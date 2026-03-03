@@ -4,14 +4,18 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use serde::Serialize;
+use utoipa::ToSchema;
 
-#[derive(Serialize)]
+/// Basic response for just sending a status message, such as OK or healthy
+/// that doesn't have any additional data from the body.
+#[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct MessageResponse {
+    /// The message to return.
     pub message: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ErrorResponse {
     pub status: u16,

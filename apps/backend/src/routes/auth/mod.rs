@@ -7,10 +7,13 @@ use crate::{
 };
 
 mod dtos;
-mod handler;
+pub mod handler;
 
 #[derive(thiserror::Error, Debug)]
 pub enum AuthError {
+    #[error("BINDING_FAILED")]
+    BindingFailed(String),
+
     #[error("VALIDATION_FAILED")]
     ValidationFailed(String),
 
@@ -37,6 +40,7 @@ impl AuthError {
     pub fn extract(self) -> (StatusCode, String, String) {
         let code = self.to_string();
         match self {
+            Self::BindingFailed(s) => (StatusCode::BAD_REQUEST, code.clone(), s),
             Self::ValidationFailed(s) => (StatusCode::BAD_REQUEST, code.clone(), s),
             Self::WrongPassword(s) => (StatusCode::FORBIDDEN, code.clone(), s),
             Self::UserNotFound(s) => (StatusCode::NOT_FOUND, code.clone(), s),

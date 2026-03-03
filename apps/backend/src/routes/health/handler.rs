@@ -1,7 +1,12 @@
 use axum::Json;
 
-use crate::api::responses::MessageResponse;
+use crate::api::responses::{ErrorResponse, MessageResponse};
 
+/// Checks if the server is healthy.
+#[utoipa::path(get, path = "/health", tags = ["health"], responses(
+        (status = 200, description = "Server is healthy", body = MessageResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
+))]
 pub async fn health_check() -> Json<MessageResponse> {
     Json(MessageResponse {
         message: "healthy".into(),
@@ -11,35 +16,18 @@ pub async fn health_check() -> Json<MessageResponse> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum::{
-        Router,
-        body::Body,
-        http::{Request, StatusCode},
-        routing,
-    };
-    use serde_json::{Value, json};
-    use tower::ServiceExt;
+    use axum::{Router, routing};
+    use axum_test::TestServer;
+    use serde_json::json;
 
     #[tokio::test]
     async fn test_health_check() {
         let app = Router::new().route("/health", routing::get(health_check));
+        let server = TestServer::new(app);
 
-        let response = app
-            .oneshot(
-                Request::builder()
-                    .uri("/health")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
+        let res = server.get("/health").await;
 
-        assert_eq!(response.status(), StatusCode::OK);
-
-        let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-            .await
-            .unwrap();
-        let body: Value = serde_json::from_slice(&body).unwrap();
-        assert_eq!(body, json!({ "message": "healthy" }));
+        res.assert_status_ok();
+        res.assert_json(&json!({ "message": "healthy" }));
     }
 }

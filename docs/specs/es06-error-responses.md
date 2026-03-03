@@ -32,10 +32,16 @@ The table below serves as the source of truth for error codes.
 
 | Code                    | Description                                                   |
 | ----------------------- | ------------------------------------------------------------- |
+| `BINDING_FAILED`        | Request body is missing certain fields.                       |
 | `VALIDATION_FAILED`     | Request body, path or query validation failed.                |
 | `WRONG_PASSWORD`        | The password inputted was wrong.                              |
 | `USER_NOT_FOUND`        | The requested user could not be found.                        |
 | `USER_NO_PASSWORD`      | The requested account does not use passwords to authenticate. |
 | `USER_ALREADY_EXISTS`   | There is already a user with the used email.                  |
 | `UNAUTHENTICATED`       | The endpoint is protected, and the user is not authenticated. |
+| `INVALID_ORIGIN`        | Origin header has an invalid URL.                             |
+| `INVALID_HOST`          | Host header has an invalid URL.                               |
+| `SERVICE_UNAVAILABLE`   | The requested service should not be available.                |
+| `UNKNOWN_TENANT`        | The requested tenant is not found.                            |
+| `FAILED_TO_SET_HEADERS` | The server failed to set the correct headers.                 |
 | `INTERNAL_SERVER_ERROR` | Generic internal server error. The server is at fault.        |

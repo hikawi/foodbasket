@@ -10,7 +10,7 @@ use tower_cookies::{Cookie, Cookies, cookie::SameSite};
 use validator::Validate;
 
 use crate::{
-    api::responses::MessageResponse,
+    api::responses::{ErrorResponse, MessageResponse},
     app::AppConfig,
     error::AppError,
     routes::{
@@ -25,6 +25,23 @@ use crate::{
 
 const SESSION_COOKIE_NAME: &str = "session_id";
 
+/// Logins to an existing account.
+///
+/// This endpoint is only available to those using login with password method. For OAuth related
+/// accounts, a separate endpoint should be used instead (currently OOS).
+#[utoipa::path(
+    post,
+    path = "/auth/login",
+    tag = "auth",
+    responses(
+        (status = 200, description = "Successful login", body = MessageResponse, headers(("set-cookie" = String, description = "Sets a new cookie"))),
+        (status = 400, description = "Bad request", body = ErrorResponse),
+        (status = 403, description = "Wrong password", body = ErrorResponse),
+        (status = 404, description = "User is not found", body = ErrorResponse),
+        (status = 422, description = "User uses a different method of authentication", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
+    ),
+)]
 pub async fn login(
     cookies: Cookies,
     State(cfg): State<Arc<AppConfig>>,
@@ -32,7 +49,7 @@ pub async fn login(
     State(session_service): State<Arc<SessionService>>,
     body: Result<Json<PostLoginRequest>, JsonRejection>,
 ) -> Result<Json<MessageResponse>, AppError> {
-    let Json(body) = body.map_err(|e| AuthError::ValidationFailed(e.body_text()))?;
+    let Json(body) = body.map_err(|e| AuthError::BindingFailed(e.body_text()))?;
 
     body.validate()
         .map_err(|e| AuthError::ValidationFailed(e.to_string()))?;
@@ -66,6 +83,21 @@ pub async fn login(
     }))
 }
 
+/// Registers an account with password.
+///
+/// This endpoint is only available to those using register with password method. For OAuth related
+/// accounts, a separate endpoint should be used instead (currently OOS).
+#[utoipa::path(
+    post,
+    path = "/auth/register",
+    tag = "auth",
+    responses(
+        (status = 201, description = "Successful register", body = MessageResponse),
+        (status = 400, description = "Bad request", body = ErrorResponse),
+        (status = 409, description = "Email already in use", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
+    ),
+)]
 pub async fn register(
     cookies: Cookies,
     State(cfg): State<Arc<AppConfig>>,
@@ -73,7 +105,7 @@ pub async fn register(
     State(session_service): State<Arc<SessionService>>,
     body: Result<Json<PostRegisterRequest>, JsonRejection>,
 ) -> Result<(StatusCode, Json<MessageResponse>), AppError> {
-    let Json(body) = body.map_err(|e| AuthError::ValidationFailed(e.body_text()))?;
+    let Json(body) = body.map_err(|e| AuthError::BindingFailed(e.body_text()))?;
 
     body.validate()
         .map_err(|e| AuthError::ValidationFailed(e.to_string()))?;
@@ -109,6 +141,18 @@ pub async fn register(
     ))
 }
 
+/// Logouts the existing account and clears the session.
+#[utoipa::path(
+    post,
+    path = "/auth/logout",
+    tag = "auth",
+    responses(
+        (status = 200, description = "Successful logout", body = MessageResponse),
+        (status = 401, description = "No ssession cookie", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
+    ),
+    security(("session_id" = [])),
+)]
 pub async fn logout(
     cookies: Cookies,
     State(session_service): State<Arc<SessionService>>,
@@ -132,6 +176,20 @@ pub async fn logout(
     }))
 }
 
+/// Retrieves the current logged in user.
+///
+/// This mainly applies for frontend to fetch the current context's profiles.
+#[utoipa::path(
+    get,
+    path = "/auth/me",
+    tag = "auth",
+    responses(
+        (status = 200, description = "Successful retrieval", body = GetMeResponse),
+        (status = 401, description = "Unauthenticated", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse),
+    ),
+    security(("session_id" = [])),
+)]
 pub async fn get_me(
     Extension(session): Extension<SessionContext>,
 ) -> Result<Json<GetMeResponse>, AppError> {
