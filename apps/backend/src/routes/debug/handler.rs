@@ -4,7 +4,7 @@ use crate::{
     api::responses::ErrorResponse,
     routes::{
         debug::dtos::DebugContextResponse,
-        extract::{HostContext, PermissionsContext, SessionContext},
+        extract::{OriginContext, PermissionsContext, SessionContext},
     },
 };
 
@@ -19,12 +19,12 @@ use crate::{
     ),
 )]
 pub async fn debug_context(
-    Extension(host): Extension<HostContext>,
+    Extension(origin): Extension<OriginContext>,
     Extension(session): Extension<SessionContext>,
     Extension(permissions): Extension<PermissionsContext>,
 ) -> Json<DebugContextResponse> {
     Json(DebugContextResponse {
-        host,
+        origin,
         session,
         permissions,
     })

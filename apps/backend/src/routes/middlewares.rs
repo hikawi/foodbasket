@@ -13,7 +13,7 @@ use tower_cookies::Cookies;
 
 use crate::{
     error::AppError,
-    routes::extract::{HostContext, PermissionsContext, SessionContext},
+    routes::extract::{OriginContext, OriginUrl, PermissionsContext, SessionContext},
     services::{SessionService, TenantService, TenantServiceError},
 };
 
@@ -21,9 +21,6 @@ use crate::{
 pub enum MiddlewareError {
     #[error("INVALID_ORIGIN")]
     InvalidOrigin,
-
-    #[error("INVALID_HOST")]
-    InvalidHost,
 
     #[error("SERVICE_UNAVAILABLE")]
     ServiceUnavailable,
@@ -59,11 +56,6 @@ impl MiddlewareError {
                 code.clone(),
                 "Malformed origin".into(),
             ),
-            Self::InvalidHost => (
-                StatusCode::BAD_REQUEST,
-                code.clone(),
-                "Malformed or non-existent host header".into(),
-            ),
             Self::ServiceUnavailable => (
                 StatusCode::SERVICE_UNAVAILABLE,
                 code.clone(),
@@ -91,7 +83,7 @@ impl MiddlewareError {
 /// Applies a dynamic CORS middleware or layer that checks the Origin header at runtime to return
 /// the correct CORS headers for browsers. This is necessary due to multi-tenancy and not knowing
 /// what users might register their slugs as.
-pub async fn dynamic_cors(req: Request, next: Next) -> Result<Response, AppError> {
+pub async fn dynamic_cors(mut req: Request, next: Next) -> Result<Response, AppError> {
     let method = req.method().clone();
     let origin_header = req
         .headers()
@@ -100,16 +92,15 @@ pub async fn dynamic_cors(req: Request, next: Next) -> Result<Response, AppError
         .map(|s| s.to_owned());
 
     // Not a browser request. Ignore.
+    // Also inject an invalid origin.
     if origin_header.is_none() {
+        req.extensions_mut().insert(OriginUrl::Invalid);
         return Ok(next.run(req).await);
     }
 
     let origin = origin_header.unwrap();
     let url = url::Url::parse(&origin).map_err(|_| MiddlewareError::InvalidOrigin)?;
     let _host = url.host_str().ok_or(MiddlewareError::InvalidOrigin)?;
-
-    // TODO
-    // Check if the host is a valid tenant
 
     // If it is preflight
     if method == Method::OPTIONS {
@@ -131,6 +122,10 @@ pub async fn dynamic_cors(req: Request, next: Next) -> Result<Response, AppError
             .into_response());
     }
 
+    // Inject the origin, since we know it's a valid origin.
+    req.extensions_mut()
+        .insert(OriginUrl::Valid(url.origin().unicode_serialization()));
+
     // Otherwise, just attach headers and move on.
     let mut res = next.run(req).await;
 
@@ -148,38 +143,36 @@ pub async fn dynamic_cors(req: Request, next: Next) -> Result<Response, AppError
     Ok(res)
 }
 
-/// Applies a layer that extracts the Host header out of the request, and check whether it's a
+/// Applies a layer that extracts the Origin header out of the request, and check whether it's a
 /// valid host in our infrastructure.
-pub async fn host_hydrate(
+pub async fn origin_hydrate(
     State(tenant_service): State<Arc<TenantService>>,
     mut req: Request,
     next: Next,
 ) -> Result<Response, AppError> {
-    let mut host = req
-        .headers()
-        .get(header::HOST)
-        .and_then(|s| s.to_str().ok())
-        .map(&str::to_owned)
-        .ok_or(MiddlewareError::InvalidHost)?;
-
-    // If it is a forwarded host, override.
-    if let Some(forwarded_host) = req
-        .headers()
-        .get(header::FORWARDED)
-        .and_then(|s| s.to_str().ok())
-    {
-        host = forwarded_host.to_owned();
-    }
+    let origin_url = req.extensions().get::<OriginUrl>();
+    let origin = match origin_url {
+        Some(OriginUrl::Valid(origin)) => origin.to_owned(),
+        _ => {
+            // Inject invalid hydration and ignore.
+            req.extensions_mut().insert(OriginContext::Anonymous);
+            return Ok(next.run(req).await);
+        }
+    };
 
     // Parse subdomain (assume format: tenant.[pos.]foodbasket.app)
-    let parts: Vec<&str> = host.split(".").collect();
+    let parts: Vec<&str> = origin
+        .trim_start_matches("https://")
+        .trim_start_matches("http://")
+        .split(".")
+        .collect();
 
     req.extensions_mut()
         .insert(match (parts.as_slice(), parts.len()) {
             (_, len) if len > 4 => Err(MiddlewareError::ServiceUnavailable)?,
-            (["pos", ..], 3) => HostContext::Pos,
-            (["admin", ..], 3) => HostContext::Admin,
-            ([slug, ..], 3) => HostContext::TenantHome(
+            (["pos", ..], 3) => OriginContext::Pos,
+            (["admin", ..], 3) => OriginContext::Admin,
+            ([slug, ..], 3) => OriginContext::TenantHome(
                 // Need to check if it's valid by slug.
                 tenant_service
                     .get_id_by_slug(slug)
@@ -187,17 +180,17 @@ pub async fn host_hydrate(
                     .map_err(MiddlewareError::from)?
                     .ok_or(MiddlewareError::UnknownTenant)?,
             ),
-            ([slug, "pos", ..], 4) => HostContext::TenantPos(
+            ([slug, "pos", ..], 4) => OriginContext::TenantPos(
                 tenant_service
                     .get_id_by_slug(slug)
                     .await
                     .map_err(MiddlewareError::from)?
                     .ok_or(MiddlewareError::UnknownTenant)?,
             ),
-            _ => HostContext::Anonymous,
+            _ => OriginContext::Anonymous,
         });
 
-    // We injected the host context.
+    // We injected the origin context.
     // We can now move forward.
     Ok(next.run(req).await)
 }

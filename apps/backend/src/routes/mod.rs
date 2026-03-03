@@ -23,7 +23,7 @@ pub fn main_routes(state: AppState) -> Router<AppState> {
         ))
         .layer(middleware::from_fn_with_state(
             state.clone(),
-            middlewares::host_hydrate,
+            middlewares::origin_hydrate,
         ))
         .layer(middleware::from_fn(middlewares::dynamic_cors))
 }

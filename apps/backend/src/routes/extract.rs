@@ -9,7 +9,15 @@ use crate::services::Session;
 #[derive(Debug, Clone, Serialize, ToSchema)]
 #[serde(tag = "type", content = "data")]
 #[allow(dead_code)]
-pub enum HostContext {
+pub enum OriginUrl {
+    Valid(String),
+    Invalid,
+}
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
+#[serde(tag = "type", content = "data")]
+#[allow(dead_code)]
+pub enum OriginContext {
     TenantPos(Uuid),
     TenantHome(Uuid),
     Pos,
