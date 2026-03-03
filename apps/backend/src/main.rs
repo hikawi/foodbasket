@@ -19,6 +19,9 @@ mod services;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    // Migration
+    sqlx::migrate!("./migrations");
+
     // Envs
     let _ = dotenvy::dotenv();
 
@@ -64,7 +67,7 @@ async fn main() -> anyhow::Result<()> {
         .with_state(state);
 
     tracing::info!("server started on port 8080");
-    axum::serve(TcpListener::bind("127.0.0.1:8080").await?, app).await?;
+    axum::serve(TcpListener::bind("0.0.0.0:8080").await?, app).await?;
 
     Ok(())
 }
