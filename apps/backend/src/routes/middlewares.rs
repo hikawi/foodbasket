@@ -1,6 +1,7 @@
 use std::{collections::HashSet, sync::Arc};
 
 use axum::{
+    Extension,
     extract::{Request, State},
     middleware::Next,
     response::{IntoResponse, Response},
@@ -14,7 +15,7 @@ use tower_cookies::Cookies;
 use crate::{
     error::AppError,
     routes::extract::{OriginContext, OriginUrl, PermissionsContext, SessionContext},
-    services::{SessionService, TenantService, TenantServiceError},
+    services::{PermissionService, SessionService, TenantService, TenantServiceError},
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -219,7 +220,34 @@ pub async fn session_hydrate(
 
 /// Applies a layer that hydrates a list of permissions for the current SessionContext
 /// and the current HostContext.
-pub async fn permission_hydrate(mut req: Request, next: Next) -> Result<Response, AppError> {
+pub async fn permission_hydrate(
+    Extension(session): Extension<SessionContext>,
+    Extension(origin): Extension<OriginContext>,
+    State(permissions): State<Arc<PermissionService>>,
+    mut req: Request,
+    next: Next,
+) -> Result<Response, AppError> {
+    // Make sure that the session context and origin context be both available.
+    let session = match session {
+        SessionContext::Authenticated(sess) => sess,
+        SessionContext::Anonymous => {
+            req.extensions_mut().insert(PermissionsContext::Anonymous);
+            return Ok(next.run(req).await);
+        }
+    };
+    let origin = match origin {
+        // Only system that needs proper permissions is the POS. Other systems
+        // are mostly read-only views and public facing stuff like ordering or seeing menus.
+        OriginContext::TenantPos(uuid) => uuid,
+        _ => {
+            req.extensions_mut().insert(PermissionsContext::Anonymous);
+            return Ok(next.run(req).await);
+        }
+    };
+
+    // TODO:
+    // Read from permissions.
+
     // TODO:
     // Convert this to a permission service calling.
     let mut placeholder_perms = HashSet::new();
@@ -227,8 +255,10 @@ pub async fn permission_hydrate(mut req: Request, next: Next) -> Result<Response
     placeholder_perms.insert("perms".to_owned());
 
     let perm_context = match req.extensions().get::<SessionContext>() {
-        Some(_) => PermissionsContext::Authenticated(Arc::new(placeholder_perms)),
-        None => PermissionsContext::Anonymous,
+        Some(SessionContext::Authenticated(_)) => {
+            PermissionsContext::Authenticated(Arc::new(placeholder_perms))
+        }
+        _ => PermissionsContext::Anonymous,
     };
 
     req.extensions_mut().insert(perm_context);

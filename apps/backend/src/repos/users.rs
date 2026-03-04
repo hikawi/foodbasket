@@ -1,4 +1,5 @@
 use sqlx::PgPool;
+use uuid::Uuid;
 
 use crate::models::User;
 
@@ -12,19 +13,17 @@ pub async fn find_by_email(pool: &PgPool, email: &str) -> Result<Option<User>, s
     .await
 }
 
-pub async fn create_user(
-    pool: &PgPool,
-    name: &str,
-    email: &str,
-    password: Option<&str>,
-) -> Result<User, sqlx::Error> {
+pub async fn create_user(pool: &PgPool, email: &str, password: &str) -> Result<User, sqlx::Error> {
     sqlx::query_as!(
         User,
-        "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *",
-        name,
+        "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
         email,
         password
     )
     .fetch_one(pool)
     .await
 }
+
+/// Gets a list of permissions for the user that belongs to a tenant.
+/// This defaults to using a staff profile
+pub async fn get_tenant_permissions(pool: &PgPool, user_id: &Uuid, tenant_id: Option<&Uuid>) {}

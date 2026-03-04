@@ -14,8 +14,6 @@ pub struct PostLoginRequest {
 #[derive(Deserialize, Validate, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PostRegisterRequest {
-    #[validate(length(min = 2, message = "Must be at least 2 characters"))]
-    pub name: String,
     #[validate(email(message = "Must be a valid email address"))]
     pub email: String,
     #[validate(length(min = 8, message = "Must be at least 8 characters"))]

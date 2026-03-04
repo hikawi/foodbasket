@@ -20,7 +20,7 @@ use crate::{
         },
         extract::SessionContext,
     },
-    services::{SessionService, UserService, sessions::Session},
+    services::{Session, SessionService, UserService},
 };
 
 const SESSION_COOKIE_NAME: &str = "session_id";
@@ -111,7 +111,7 @@ pub async fn register(
         .map_err(|e| AuthError::ValidationFailed(e.to_string()))?;
 
     let user = user_service
-        .register_user(&body.name, &body.email, Some(&body.password))
+        .register_user(&body.email, &body.password)
         .await
         .map_err(AuthError::from)?;
 

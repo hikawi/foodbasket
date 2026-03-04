@@ -8,7 +8,7 @@ use tracing_subscriber::EnvFilter;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::services::{SessionService, TenantService, UserService};
+use crate::services::{PermissionService, SessionService, TenantService, UserService};
 
 mod api;
 mod app;
@@ -22,9 +22,6 @@ mod services;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Migration
-    sqlx::migrate!("./migrations");
-
     // Envs
     let _ = dotenvy::dotenv();
 
@@ -50,10 +47,14 @@ async fn main() -> anyhow::Result<()> {
         .build()?;
     cache_client.init().await?;
 
+    // Migration, maybe.
+    sqlx::migrate!("./migrations").run(&pool).await;
+
     // Setup list of services.
     let session_service = SessionService::new(cache_client.clone());
     let user_service = UserService::new(pool.clone());
     let tenant_service = TenantService::new(pool.clone(), cache_client.clone());
+    let permission_service = PermissionService::new(pool.clone(), cache_client.clone());
 
     let state = app::AppState {
         config: Arc::new(cfg),
@@ -62,6 +63,7 @@ async fn main() -> anyhow::Result<()> {
         tenant_service: Arc::new(tenant_service),
         session_service: Arc::new(session_service),
         user_service: Arc::new(user_service),
+        permission_service: Arc::new(permission_service),
     };
 
     let app = Router::new()

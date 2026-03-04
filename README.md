@@ -57,6 +57,7 @@ at all:
 - Docker & Docker Compose
 - Rustc v1.93
 - Sqlx (`cargo install cargo-sqlx`)
+- Atlas
 - NodeJS (via NVM or NPM is fine)
 - GoTask (aka Task or Taskfile)
 - Caddyserver (not required, but nice to have)
