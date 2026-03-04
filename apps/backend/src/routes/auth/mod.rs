@@ -3,7 +3,7 @@ use http::StatusCode;
 
 use crate::{
     app::AppState,
-    services::{sessions::SessionServiceError, users::UserServiceError},
+    services::{SessionServiceError, UserServiceError},
 };
 
 mod dtos;

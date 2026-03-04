@@ -4,7 +4,7 @@ use axum::extract::FromRef;
 use fred::prelude::Client as CacheClient;
 use sqlx::PgPool;
 
-use crate::services::{SessionService, TenantService, UserService};
+use crate::services::{PermissionService, SessionService, TenantService, UserService};
 
 pub struct AppConfig {
     pub db_url: String,
@@ -22,6 +22,7 @@ pub struct AppState {
     pub session_service: Arc<SessionService>,
     pub tenant_service: Arc<TenantService>,
     pub user_service: Arc<UserService>,
+    pub permission_service: Arc<PermissionService>,
 }
 
 impl AppConfig {
@@ -70,5 +71,11 @@ impl FromRef<AppState> for Arc<SessionService> {
 impl FromRef<AppState> for Arc<UserService> {
     fn from_ref(input: &AppState) -> Self {
         input.user_service.clone()
+    }
+}
+
+impl FromRef<AppState> for Arc<PermissionService> {
+    fn from_ref(input: &AppState) -> Self {
+        input.permission_service.clone()
     }
 }
