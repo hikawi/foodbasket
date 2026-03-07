@@ -3,10 +3,9 @@ use uuid::Uuid;
 
 #[derive(Debug)]
 #[allow(dead_code)]
-pub struct StaffProfile {
+pub struct SystemProfile {
     pub id: Uuid,
     pub user_id: Uuid,
-    pub tenant_id: Uuid,
     pub avatar_url: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

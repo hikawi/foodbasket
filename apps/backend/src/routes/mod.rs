@@ -3,19 +3,29 @@ use axum::{Router, middleware};
 use crate::app::AppState;
 
 pub mod auth;
-pub mod debug;
 pub mod extract;
 pub mod health;
 pub mod middlewares;
 
 pub fn main_routes(state: AppState) -> Router<AppState> {
     Router::new()
-        .merge(health::routes())
         .nest("/auth", auth::routes())
-        .nest("/debug", debug::routes())
+        .merge(health::routes())
         .layer(middleware::from_fn_with_state(
             state.clone(),
-            middlewares::permission_hydrate,
+            middlewares::context_solidify,
+        ))
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            middlewares::policy_hydrate,
+        ))
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            middlewares::branch_hydrate,
+        ))
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            middlewares::profile_hydrate,
         ))
         .layer(middleware::from_fn_with_state(
             state.clone(),

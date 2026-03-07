@@ -1,7 +1,7 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::models::Tenant;
+use crate::models::{Branch, Tenant};
 
 pub async fn find_by_id(pool: &PgPool, id: &Uuid) -> Result<Option<Tenant>, sqlx::Error> {
     sqlx::query_as!(
@@ -28,5 +28,18 @@ LIMIT 1
         slug,
     )
     .fetch_optional(pool)
+    .await
+}
+
+pub async fn get_branches(pool: &PgPool, tenant_id: &Uuid) -> Result<Vec<Branch>, sqlx::Error> {
+    sqlx::query_as!(
+        Branch,
+        r#"
+        SELECT id, tenant_id, name, created_at, updated_at, deleted_at
+        FROM branches
+        WHERE tenant_id = $1"#,
+        tenant_id
+    )
+    .fetch_all(pool)
     .await
 }

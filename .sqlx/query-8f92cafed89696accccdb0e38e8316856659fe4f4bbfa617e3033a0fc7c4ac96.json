@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM users WHERE lower(email) = $1 AND deleted_at IS NULL",
+  "query": "\n        SELECT id, tenant_id, name, created_at, updated_at, deleted_at\n        FROM branches\n        WHERE tenant_id = $1",
   "describe": {
     "columns": [
       {
@@ -10,12 +10,12 @@
       },
       {
         "ordinal": 1,
-        "name": "email",
-        "type_info": "Text"
+        "name": "tenant_id",
+        "type_info": "Uuid"
       },
       {
         "ordinal": 2,
-        "name": "password",
+        "name": "name",
         "type_info": "Text"
       },
       {
@@ -36,7 +36,7 @@
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -48,5 +48,5 @@
       true
     ]
   },
-  "hash": "5b3d6248e097a57011b4c7e77e548127f8dcfaf995128c923478a9c45cf5f0ee"
+  "hash": "8f92cafed89696accccdb0e38e8316856659fe4f4bbfa617e3033a0fc7c4ac96"
 }

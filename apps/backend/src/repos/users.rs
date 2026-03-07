@@ -1,5 +1,4 @@
 use sqlx::PgPool;
-use uuid::Uuid;
 
 use crate::models::User;
 
@@ -23,7 +22,3 @@ pub async fn create_user(pool: &PgPool, email: &str, password: &str) -> Result<U
     .fetch_one(pool)
     .await
 }
-
-/// Gets a list of permissions for the user that belongs to a tenant.
-/// This defaults to using a staff profile
-pub async fn get_tenant_permissions(pool: &PgPool, user_id: &Uuid, tenant_id: Option<&Uuid>) {}
