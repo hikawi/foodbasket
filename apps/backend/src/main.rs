@@ -8,7 +8,7 @@ use tracing_subscriber::EnvFilter;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::services::{PermissionService, SessionService, TenantService, UserService};
+use crate::services::{PolicyService, ProfileService, SessionService, TenantService, UserService};
 
 mod api;
 mod app;
@@ -48,22 +48,26 @@ async fn main() -> anyhow::Result<()> {
     cache_client.init().await?;
 
     // Migration, maybe.
-    sqlx::migrate!("./migrations").run(&pool).await;
+    sqlx::migrate!("./migrations").run(&pool).await?;
 
     // Setup list of services.
     let session_service = SessionService::new(cache_client.clone());
     let user_service = UserService::new(pool.clone());
     let tenant_service = TenantService::new(pool.clone(), cache_client.clone());
-    let permission_service = PermissionService::new(pool.clone(), cache_client.clone());
+    let profile_service = ProfileService::new(pool.clone(), cache_client.clone());
+    let policy_service = PolicyService::new(pool.clone(), cache_client.clone());
 
     let state = app::AppState {
         config: Arc::new(cfg),
         db: pool,
         cache: cache_client,
-        tenant_service: Arc::new(tenant_service),
-        session_service: Arc::new(session_service),
-        user_service: Arc::new(user_service),
-        permission_service: Arc::new(permission_service),
+        services: app::AppServices {
+            tenants: Arc::new(tenant_service),
+            sessions: Arc::new(session_service),
+            users: Arc::new(user_service),
+            profiles: Arc::new(profile_service),
+            policies: Arc::new(policy_service),
+        },
     };
 
     let app = Router::new()

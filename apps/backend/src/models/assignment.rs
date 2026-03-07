@@ -4,6 +4,7 @@ use uuid::Uuid;
 use crate::models::ScopeType;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct Assignment {
     pub id: Uuid,
     pub staff_profile_id: Uuid,

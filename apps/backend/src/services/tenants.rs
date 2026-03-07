@@ -1,5 +1,5 @@
 use fred::{
-    prelude::{Client as CacheClient, KeysInterface},
+    prelude::{Client as CacheClient, KeysInterface, SetsInterface},
     types::Expiration,
 };
 use sqlx::PgPool;
@@ -135,6 +135,50 @@ impl TenantService {
         });
 
         Ok(exists)
+    }
+
+    /// Checks if the provided branch belongs to the tenant.
+    pub async fn is_branch_of_tenant(
+        &self,
+        branch_id: &Uuid,
+        tenant_id: &Uuid,
+    ) -> Result<bool, TenantServiceError> {
+        let branch_id_str = branch_id.to_string();
+        let tenant_id_str = tenant_id.to_string();
+        let key = cache_keys::tenant_branches(&tenant_id_str);
+
+        let pipeline = self.cache.pipeline();
+        let _: () = pipeline.exists(&key).await?;
+        let _: () = pipeline.sismember(&key, &branch_id_str).await?;
+        let results = pipeline.all::<Vec<i64>>().await?;
+
+        let group_exists = results[0] == 1;
+        let is_member = results[1] == 1;
+
+        if group_exists {
+            return Ok(is_member);
+        }
+
+        // Welp. Cache miss. DB has to be hit regardless.
+        let branches = repos::tenants::get_branches(&self.pool, tenant_id).await?;
+        let moving_cache = self.cache.clone();
+        let is_member = branches.iter().any(|v| &v.id == branch_id);
+
+        // Set and forget.
+        tokio::spawn(async move {
+            let mut members: Vec<String> = branches.into_iter().map(|b| b.id.to_string()).collect();
+
+            // ALWAYS add a sentinel so the key 'EXISTS' even if branches are empty.
+            // Thank you Gemini!
+            members.push("SENTINEL".into());
+
+            let pipe = moving_cache.pipeline();
+            let _: () = pipe.sadd(&key, members).await.unwrap_or_default();
+            let _: () = pipe.expire(&key, 3600, None).await.unwrap_or_default();
+            let _: () = pipe.all::<()>().await.unwrap_or_default();
+        });
+
+        Ok(is_member)
     }
 }
 

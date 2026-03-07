@@ -19,7 +19,6 @@ use utoipa::{
     servers((url = "/v1", description = "Current version of the API")),
     paths(
         crate::routes::health::handler::health_check, 
-        crate::routes::debug::handler::debug_context, 
         crate::routes::auth::handler::login,
         crate::routes::auth::handler::register,
         crate::routes::auth::handler::logout,

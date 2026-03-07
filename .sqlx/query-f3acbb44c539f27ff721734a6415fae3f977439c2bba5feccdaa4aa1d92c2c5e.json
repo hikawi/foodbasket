@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            p.id, \n            p.tenant_id, \n            p.branch_id, \n            p.name, \n            p.statements AS \"statements: Json<PolicyDocument>\", \n            p.created_at, \n            p.updated_at, \n            p.deleted_at\n        FROM policies p\n        INNER JOIN assignments a ON a.policy_id = p.id\n        WHERE a.system_profile_id = $1\n          AND p.deleted_at IS NULL \n          AND a.scope_type = 'system'::scope_type\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "tenant_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "branch_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "statements: Json<PolicyDocument>",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 5,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 7,
+        "name": "deleted_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "f3acbb44c539f27ff721734a6415fae3f977439c2bba5feccdaa4aa1d92c2c5e"
+}

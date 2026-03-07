@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM users WHERE lower(email) = $1 AND deleted_at IS NULL",
+  "query": "\n        SELECT id, user_id, avatar_url, created_at, updated_at, deleted_at\n        FROM system_profiles\n        WHERE user_id = $1 AND deleted_at IS NULL\n        LIMIT 1\n        ",
   "describe": {
     "columns": [
       {
@@ -10,12 +10,12 @@
       },
       {
         "ordinal": 1,
-        "name": "email",
-        "type_info": "Text"
+        "name": "user_id",
+        "type_info": "Uuid"
       },
       {
         "ordinal": 2,
-        "name": "password",
+        "name": "avatar_url",
         "type_info": "Text"
       },
       {
@@ -36,17 +36,17 @@
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Uuid"
       ]
     },
     "nullable": [
       false,
       false,
-      false,
+      true,
       false,
       false,
       true
     ]
   },
-  "hash": "5b3d6248e097a57011b4c7e77e548127f8dcfaf995128c923478a9c45cf5f0ee"
+  "hash": "9cee5feef9ad0ded91c7af823c8d3e9c3c1ade0b0d44d8e6eeffcb60f045e4b5"
 }

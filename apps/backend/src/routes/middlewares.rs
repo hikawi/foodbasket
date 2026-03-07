@@ -1,4 +1,4 @@
-use std::{collections::HashSet, sync::Arc};
+use std::sync::Arc;
 
 use axum::{
     Extension,
@@ -11,11 +11,15 @@ use http::{
     header::{self, InvalidHeaderValue},
 };
 use tower_cookies::Cookies;
+use uuid::Uuid;
 
 use crate::{
     error::AppError,
-    routes::extract::{OriginContext, OriginUrl, PermissionsContext, SessionContext},
-    services::{PermissionService, SessionService, TenantService, TenantServiceError},
+    routes::extract::{
+        BranchContext, OriginContext, OriginUrl, PolicyContext, ProfileContext, RequestContext,
+        SessionContext,
+    },
+    services::{PolicyService, ProfileService, SessionService, TenantService, TenantServiceError},
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -101,7 +105,7 @@ pub async fn dynamic_cors(mut req: Request, next: Next) -> Result<Response, AppE
 
     let origin = origin_header.unwrap();
     let url = url::Url::parse(&origin).map_err(|_| MiddlewareError::InvalidOrigin)?;
-    let _host = url.host_str().ok_or(MiddlewareError::InvalidOrigin)?;
+    let host = url.host_str().ok_or(MiddlewareError::InvalidOrigin)?;
 
     // If it is preflight
     if method == Method::OPTIONS {
@@ -115,9 +119,10 @@ pub async fn dynamic_cors(mut req: Request, next: Next) -> Result<Response, AppE
                 ),
                 (
                     header::ACCESS_CONTROL_ALLOW_HEADERS,
-                    "Content-Type, Authorization".into(),
+                    "Content-Type, X-Branch-ID".into(),
                 ),
                 (header::ACCESS_CONTROL_ALLOW_CREDENTIALS, "true".into()),
+                (header::VARY, "Origin".into()),
             ],
         )
             .into_response());
@@ -125,7 +130,7 @@ pub async fn dynamic_cors(mut req: Request, next: Next) -> Result<Response, AppE
 
     // Inject the origin, since we know it's a valid origin.
     req.extensions_mut()
-        .insert(OriginUrl::Valid(url.origin().unicode_serialization()));
+        .insert(OriginUrl::Valid(host.to_owned()));
 
     // Otherwise, just attach headers and move on.
     let mut res = next.run(req).await;
@@ -140,6 +145,7 @@ pub async fn dynamic_cors(mut req: Request, next: Next) -> Result<Response, AppE
         header::ACCESS_CONTROL_ALLOW_CREDENTIALS,
         "true".parse().map_err(MiddlewareError::from)?,
     );
+    headers.insert(header::VARY, "Origin".parse().unwrap());
 
     Ok(res)
 }
@@ -151,8 +157,7 @@ pub async fn origin_hydrate(
     mut req: Request,
     next: Next,
 ) -> Result<Response, AppError> {
-    let origin_url = req.extensions().get::<OriginUrl>();
-    let origin = match origin_url {
+    let origin = match req.extensions().get::<OriginUrl>() {
         Some(OriginUrl::Valid(origin)) => origin.to_owned(),
         _ => {
             // Inject invalid hydration and ignore.
@@ -161,12 +166,8 @@ pub async fn origin_hydrate(
         }
     };
 
-    // Parse subdomain (assume format: tenant.[pos.]foodbasket.app)
-    let parts: Vec<&str> = origin
-        .trim_start_matches("https://")
-        .trim_start_matches("http://")
-        .split(".")
-        .collect();
+    // Parse subdomain (assume format: https://tenant.[pos.]foodbasket.app)
+    let parts: Vec<&str> = origin.split(".").collect();
 
     req.extensions_mut()
         .insert(match (parts.as_slice(), parts.len()) {
@@ -214,54 +215,171 @@ pub async fn session_hydrate(
     };
 
     req.extensions_mut().insert(session_ctx);
+    Ok(next.run(req).await)
+}
+
+/// Applies a layer that reads the extension for SessionContext. Depending on the user and the
+/// context, reads the profile. There are 3 separations for best isolation, as staff_profiles,
+/// customer_profiles, system_profiles are all separate, but link to the same user.
+pub async fn profile_hydrate(
+    Extension(origin): Extension<OriginContext>,
+    Extension(session): Extension<SessionContext>,
+    State(profile_service): State<Arc<ProfileService>>,
+    mut req: Request,
+    next: Next,
+) -> Result<Response, AppError> {
+    // Attempt to read the profile based on the session and origin.
+    let sess = match session {
+        SessionContext::Authenticated(sess) => sess,
+        _ => {
+            // If not authenticated. Why would we hydrate profiles?
+            req.extensions_mut().insert(ProfileContext::Anonymous);
+            return Ok(next.run(req).await);
+        }
+    };
+
+    let ctx = match (origin, sess.user_id) {
+        // If it is in tenant context and authenticated, parse as customer profiles.
+        (OriginContext::TenantHome(tenant_id), Some(user_id)) => {
+            match profile_service
+                .get_customer_profile(&user_id, &tenant_id)
+                .await
+            {
+                Ok(profile) => ProfileContext::Customer(Arc::new(profile)),
+                _ => ProfileContext::Anonymous,
+            }
+        }
+        // If it is in POS context and authenticated, parse as staff profiles.
+        (OriginContext::TenantPos(tenant_id), Some(user_id)) => {
+            match profile_service
+                .get_staff_profile(&user_id, &tenant_id)
+                .await
+            {
+                Ok(profile) => ProfileContext::Staff(Arc::new(profile)),
+                _ => ProfileContext::Anonymous,
+            }
+        }
+        // If it is in another context and authenticated, parse as system profiles.
+        (_, Some(user_id)) => match profile_service.get_system_profile(&user_id).await {
+            Ok(profile) => ProfileContext::System(Arc::new(profile)),
+            _ => ProfileContext::Anonymous,
+        },
+        // Otherwise, that means user_id is probably None.
+        _ => ProfileContext::Anonymous,
+    };
+    req.extensions_mut().insert(ctx);
 
     Ok(next.run(req).await)
 }
 
-/// Applies a layer that hydrates a list of permissions for the current SessionContext
-/// and the current HostContext.
-pub async fn permission_hydrate(
-    Extension(session): Extension<SessionContext>,
-    Extension(origin): Extension<OriginContext>,
-    State(permissions): State<Arc<PermissionService>>,
+/// A layer to pull out the X-Branch-ID header for the current context of what branch are we
+/// looking at. Basically just to not have the stupid query ?branch_id which is extremely ugly on
+/// the frontend!
+pub async fn branch_hydrate(
+    Extension(origin_ctx): Extension<OriginContext>,
+    State(tenant_service): State<Arc<TenantService>>,
     mut req: Request,
     next: Next,
 ) -> Result<Response, AppError> {
-    // Make sure that the session context and origin context be both available.
-    let session = match session {
-        SessionContext::Authenticated(sess) => sess,
-        SessionContext::Anonymous => {
-            req.extensions_mut().insert(PermissionsContext::Anonymous);
-            return Ok(next.run(req).await);
+    let branch_id = req
+        .headers()
+        .get("X-Branch-ID")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| Uuid::parse_str(v).ok());
+
+    let branch_ctx = match (branch_id, origin_ctx) {
+        (
+            Some(branch_id),
+            OriginContext::TenantPos(tenant_id) | OriginContext::TenantHome(tenant_id),
+        ) => {
+            match tenant_service
+                .is_branch_of_tenant(&branch_id, &tenant_id)
+                .await
+            {
+                Ok(true) => BranchContext::Branch(branch_id),
+                _ => BranchContext::Anonymous,
+            }
         }
+        _ => BranchContext::Anonymous,
     };
-    let origin = match origin {
-        // Only system that needs proper permissions is the POS. Other systems
-        // are mostly read-only views and public facing stuff like ordering or seeing menus.
-        OriginContext::TenantPos(uuid) => uuid,
+
+    req.extensions_mut().insert(branch_ctx);
+    Ok(next.run(req).await)
+}
+
+/// The innermost required layer to pull permissions in the form of policies. This will actually
+/// run a calculate IF AND ONLY IF all other middlewares succeeded in querying or extracting the
+/// context needed. Otherwise, this injects an empty PolicyContext.
+pub async fn policy_hydrate(
+    Extension(origin_ctx): Extension<OriginContext>,
+    Extension(profile_ctx): Extension<ProfileContext>,
+    Extension(branch_ctx): Extension<BranchContext>,
+    State(policy_service): State<Arc<PolicyService>>,
+    mut req: Request,
+    next: Next,
+) -> Result<Response, AppError> {
+    // We can safely extract extensions because it always has a fallback option (Anonymous).
+    // We start extracting based on the combination of the three.
+    let policies = match (origin_ctx, profile_ctx, branch_ctx) {
+        // A customer is looking at the tenant's webpage.
+        (
+            OriginContext::TenantHome(tenant_id),
+            ProfileContext::Customer(customer_id),
+            branch_ctx,
+        ) => {
+            // Fetch policies for this customer for that tenant.
+            let branch_id = match branch_ctx {
+                BranchContext::Branch(ref branch_id) => Some(branch_id),
+                BranchContext::Anonymous => None,
+            };
+            policy_service
+                .get_customer_policies(&customer_id.id, &tenant_id, branch_id)
+                .await
+                .ok()
+        }
+        // A staff is looking at the tenant's staff system.
+        (OriginContext::TenantPos(tenant_id), ProfileContext::Staff(staff_id), branch_ctx) => {
+            let branch_id = match branch_ctx {
+                BranchContext::Branch(ref branch_id) => Some(branch_id),
+                BranchContext::Anonymous => None,
+            };
+            policy_service
+                .get_staff_policies(&staff_id.id, &tenant_id, branch_id)
+                .await
+                .ok()
+        }
+        // A normal user looking at anything?
+        (_, ProfileContext::System(system_id), _) => {
+            policy_service.get_system_policies(&system_id.id).await.ok()
+        }
+        // For other cases, they are invalid and should be ignored.
         _ => {
-            req.extensions_mut().insert(PermissionsContext::Anonymous);
-            return Ok(next.run(req).await);
+            // Should do nothing here.
+            None
         }
     };
 
-    // TODO:
-    // Read from permissions.
+    req.extensions_mut().insert(match policies {
+        Some(policies) => PolicyContext::Authenticated(Arc::new(policies)),
+        _ => PolicyContext::Anonymous,
+    });
 
-    // TODO:
-    // Convert this to a permission service calling.
-    let mut placeholder_perms = HashSet::new();
-    placeholder_perms.insert("test".to_owned());
-    placeholder_perms.insert("perms".to_owned());
+    Ok(next.run(req).await)
+}
 
-    let perm_context = match req.extensions().get::<SessionContext>() {
-        Some(SessionContext::Authenticated(_)) => {
-            PermissionsContext::Authenticated(Arc::new(placeholder_perms))
-        }
-        _ => PermissionsContext::Anonymous,
-    };
+/// Just a final layer that compacts everything into one object for handlers to handle easily.
+pub async fn context_solidify(
+    Extension(origin_ctx): Extension<OriginContext>,
+    Extension(session_ctx): Extension<SessionContext>,
+    Extension(profile_ctx): Extension<ProfileContext>,
+    Extension(branch_ctx): Extension<BranchContext>,
+    Extension(policy_ctx): Extension<PolicyContext>,
+    mut req: Request,
+    next: Next,
+) -> Result<Response, AppError> {
+    let request_ctx =
+        RequestContext::new(origin_ctx, session_ctx, profile_ctx, branch_ctx, policy_ctx);
 
-    req.extensions_mut().insert(perm_context);
-
+    req.extensions_mut().insert(Arc::new(request_ctx));
     Ok(next.run(req).await)
 }
