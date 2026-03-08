@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use uuid::Uuid;
 use validator::Validate;
 
 #[derive(Deserialize, Validate, ToSchema)]
@@ -22,7 +23,19 @@ pub struct PostRegisterRequest {
 
 #[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
+pub enum ProfileContextResponse {
+    Staff,
+    Customer,
+    System,
+    Anonymous,
+}
+
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct GetMeResponse {
-    pub id: String,
-    pub email: String,
+    pub user_id: Uuid,
+    pub user_email: String,
+    pub tenant_id: Option<Uuid>,
+    pub branch_id: Option<Uuid>,
+    pub profile_context: ProfileContextResponse,
 }
