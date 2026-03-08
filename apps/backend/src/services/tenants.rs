@@ -188,6 +188,7 @@ mod tests {
 
     use chrono::Utc;
     use fred::{mocks::SimpleMap, prelude::ClientLike};
+    use testcontainers::{GenericImage, core::WaitFor, runners::AsyncRunner};
 
     use crate::models::Tenant;
 
@@ -335,6 +336,98 @@ mod tests {
 
         let opt = service.is_tenant(test_tenant.id).await?;
         assert!(!opt);
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_is_branch_success(pool: PgPool) -> anyhow::Result<()> {
+        let valkey_container = GenericImage::new("valkey/valkey", "9-alpine")
+            .with_exposed_port(6379.into())
+            .with_wait_for(WaitFor::message_on_stdout("Ready to accept connections"))
+            .start()
+            .await?;
+        let valkey_host = valkey_container.get_host().await?;
+        let valkey_port = valkey_container.get_host_port_ipv4(6379).await?;
+
+        let cache_config =
+            fred::prelude::Config::from_url(&format!("redis://{valkey_host}:{valkey_port}"))?;
+        let cache_client = CacheClient::new(cache_config, None, None, None);
+
+        let tenant_id = Uuid::new_v4();
+        let branch_id = Uuid::new_v4();
+        let key = cache_keys::tenant_branches(&tenant_id.to_string());
+        cache_client.connect();
+        cache_client.wait_for_connect().await?;
+        let _ = cache_client
+            .sadd::<(), _, _>(&key, vec![branch_id.to_string(), "SENTINEL".into()])
+            .await?;
+
+        let service = TenantService::new(pool, cache_client);
+        assert!(matches!(
+            service.is_branch_of_tenant(&branch_id, &tenant_id).await,
+            Ok(true),
+        ));
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_is_branch_cache_not_found(pool: PgPool) -> anyhow::Result<()> {
+        let valkey_container = GenericImage::new("valkey/valkey", "9-alpine")
+            .with_exposed_port(6379.into())
+            .with_wait_for(WaitFor::message_on_stdout("Ready to accept connections"))
+            .start()
+            .await?;
+        let valkey_host = valkey_container.get_host().await?;
+        let valkey_port = valkey_container.get_host_port_ipv4(6379).await?;
+
+        let cache_config =
+            fred::prelude::Config::from_url(&format!("redis://{valkey_host}:{valkey_port}"))?;
+        let cache_client = CacheClient::new(cache_config, None, None, None);
+        cache_client.connect();
+        cache_client.wait_for_connect().await?;
+
+        let tenant_id = Uuid::new_v4();
+        let branch_id = Uuid::new_v4();
+        let key = cache_keys::tenant_branches(&tenant_id.to_string());
+        let _ = cache_client
+            .sadd::<(), _, _>(&key, vec!["SENTINEL"])
+            .await?;
+
+        let service = TenantService::new(pool, cache_client);
+        assert!(matches!(
+            service.is_branch_of_tenant(&branch_id, &tenant_id).await,
+            Ok(false),
+        ));
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_is_branch_cache_miss(pool: PgPool) -> anyhow::Result<()> {
+        let valkey_container = GenericImage::new("valkey/valkey", "9-alpine")
+            .with_exposed_port(6379.into())
+            .with_wait_for(WaitFor::message_on_stdout("Ready to accept connections"))
+            .start()
+            .await?;
+        let valkey_host = valkey_container.get_host().await?;
+        let valkey_port = valkey_container.get_host_port_ipv4(6379).await?;
+
+        let cache_config =
+            fred::prelude::Config::from_url(&format!("redis://{valkey_host}:{valkey_port}"))?;
+        let cache_client = CacheClient::new(cache_config, None, None, None);
+        cache_client.connect();
+        cache_client.wait_for_connect().await?;
+
+        let tenant_id = Uuid::new_v4();
+        let branch_id = Uuid::new_v4();
+
+        let service = TenantService::new(pool, cache_client);
+        assert!(matches!(
+            service.is_branch_of_tenant(&branch_id, &tenant_id).await,
+            Ok(false),
+        ));
 
         Ok(())
     }
