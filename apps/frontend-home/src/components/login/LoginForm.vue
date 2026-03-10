@@ -36,6 +36,10 @@ async function login() {
         error.value = "errorServer";
         break;
     }
+
+    if (res.ok) {
+      window.location.href = "/";
+    }
   } catch {
     error.value = "errorInternet";
   }

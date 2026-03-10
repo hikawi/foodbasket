@@ -1,0 +1,7 @@
+{
+  "general": {
+    "loading": "Loading",
+    "errorNotTenant": "That tenant doesn't exist",
+    "errorUnauthorized": "You are not logged in"
+  }
+}

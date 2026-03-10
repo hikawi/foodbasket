@@ -4,8 +4,7 @@
     "description": "Let's start a dining journey",
     "hello": "Hello, World",
     "loading": "Loading",
-    "errorUnauthorized": "You are not logged in",
-    "errorInternet": "Couldn't login. Is your internet out?"
+    "errorUnauthorized": "You are not logged in"
   },
   "login": {
     "title": "Login",
