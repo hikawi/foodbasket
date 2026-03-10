@@ -1,0 +1,25 @@
+---
+import LoginForm from "../../components/login/LoginForm.vue";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getTranslations } from "../../utils/i18n";
+
+const locale = Astro.currentLocale;
+const tl = await getTranslations(locale);
+---
+
+<BaseLayout title="Login" description="Login to the FoodBasket platform.">
+  <main class="font-inter min-h-screen w-full h-fit flex items-center justify-center p-6">
+    <LoginForm tl={tl} client:load />
+  </main>
+</BaseLayout>
+
+<style scoped>
+  main {
+    background: radial-gradient(
+      150% 100% at 50% 0%,
+      var(--color-violent-violet-600) 50%,
+      #ffffff 50.1%
+    );
+    background-attachment: fixed;
+  }
+</style>

@@ -3,7 +3,6 @@ use std::{sync::Arc, time::Duration};
 use axum::Router;
 use fred::prelude::{ClientLike, TcpConfig};
 use tokio::net::TcpListener;
-use tower_cookies::CookieManagerLayer;
 use tracing_subscriber::EnvFilter;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -73,7 +72,6 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .nest("/v1", routes::main_routes(state.clone()))
         .merge(SwaggerUi::new("/swagger").url("/api-docs/openapi.json", docs::ApiDocs::openapi()))
-        .layer(CookieManagerLayer::new())
         .with_state(state);
 
     tracing::info!("server started on port 8080");
