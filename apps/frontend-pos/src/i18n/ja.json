@@ -1,0 +1,7 @@
+{
+  "general": {
+    "loading": "ロード中",
+    "errorNotTenant": "このスラッグは無効です",
+    "errorUnauthorized": "ログインしていません"
+  }
+}
