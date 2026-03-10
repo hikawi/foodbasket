@@ -1,0 +1,25 @@
+{
+  "index": {
+    "title": "FoodBasket",
+    "description": "Let's start a dining journey",
+    "hello": "Hello, World",
+    "loading": "Loading",
+    "errorUnauthorized": "You are not logged in",
+    "errorInternet": "Couldn't login. Is your internet out?"
+  },
+  "login": {
+    "title": "Login",
+    "emailAddress": "Email Address",
+    "placeholderEmail": "john.doe@foodbasket.app",
+    "password": "Password",
+    "or": "or",
+    "loginWithGoogle": "Login with Google",
+    "cta": "Login",
+    "noAccount": "I don't have an account",
+    "errorBadRequest": "Invalid email or password.",
+    "errorWrongPassword": "Incorrect password",
+    "errorAccountDoesntExist": "There is no account with that email",
+    "errorServer": "The server failed to check this. Please wait a moment.",
+    "errorInternet": "Couldn't login. Is your internet out?"
+  }
+}

@@ -142,6 +142,10 @@ pub async fn dynamic_cors(mut req: Request, next: Next) -> Result<Response, AppE
         origin.parse().map_err(MiddlewareError::from)?,
     );
     headers.insert(
+        header::ACCESS_CONTROL_ALLOW_HEADERS,
+        "Content-Type, X-Branch-ID".parse().unwrap(),
+    );
+    headers.insert(
         header::ACCESS_CONTROL_ALLOW_CREDENTIALS,
         "true".parse().map_err(MiddlewareError::from)?,
     );
@@ -172,9 +176,9 @@ pub async fn origin_hydrate(
     req.extensions_mut()
         .insert(match (parts.as_slice(), parts.len()) {
             (_, len) if len > 4 => Err(MiddlewareError::ServiceUnavailable)?,
-            (["pos", ..], 3) => OriginContext::Pos,
-            (["admin", ..], 3) => OriginContext::Admin,
-            ([slug, ..], 3) => OriginContext::TenantHome(
+            (["pos", "foodbasket", "app" | "localhost"], 3) => OriginContext::Pos,
+            (["admin", "foodbasket", "app" | "localhost"], 3) => OriginContext::Admin,
+            ([slug, "foodbasket", "app" | "localhost"], 3) => OriginContext::TenantHome(
                 // Need to check if it's valid by slug.
                 tenant_service
                     .get_id_by_slug(slug)
@@ -182,7 +186,7 @@ pub async fn origin_hydrate(
                     .map_err(MiddlewareError::from)?
                     .ok_or(MiddlewareError::UnknownTenant)?,
             ),
-            ([slug, "pos", ..], 4) => OriginContext::TenantPos(
+            ([slug, "pos", "foodbasket", "app" | "localhost"], 4) => OriginContext::TenantPos(
                 tenant_service
                     .get_id_by_slug(slug)
                     .await

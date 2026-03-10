@@ -84,13 +84,6 @@ tasks:
       - pnpm -r --parallel dev --host
 
   # Database migrations
-  migrate:
-    desc: Generate diffs and apply all migrations.
-    dir: apps/backend
-    cmds:
-      - task: migrate:diff
-      - task: migrate:apply
-
   migrate:diff:
     desc: Generate the diffs for a target schema.
     dir: apps/backend

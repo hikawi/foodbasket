@@ -1,1 +1,62 @@
 @import "tailwindcss";
+
+@theme {
+  --font-nunito: "Nunito", ".AppleSystemUIFont", "-apple-system", "sans-serif";
+
+  --color-state-danger: #ff383c;
+
+  /* Neptune Series */
+  --color-neptune-50: #dafaf8;
+  --color-neptune-100: #baf6f2;
+  --color-neptune-200: #94e2dd;
+  --color-neptune-300: #86cec9;
+  --color-neptune-400: #78b9b5; /* Default */
+  --color-neptune-500: #619894;
+  --color-neptune-600: #4c7774;
+  --color-neptune-700: #375856;
+  --color-neptune-800: #253d3c;
+  --color-neptune-900: #132221;
+  --color-neptune-950: #0a1515;
+
+  /* Chill Series */
+  --color-chill-50: #cff8ff;
+  --color-chill-100: #8ff2fe;
+  --color-chill-200: #21daeb;
+  --color-chill-300: #1bbdcb;
+  --color-chill-400: #15a0ac;
+  --color-chill-500: #0f828c; /* Default */
+  --color-chill-600: #0a6971;
+  --color-chill-700: #054f55;
+  --color-chill-800: #03363b;
+  --color-chill-900: #011f23;
+  --color-chill-950: #001416;
+
+  /* Deep Sea Series */
+  --color-deep-sea-50: #eef4ff;
+  --color-deep-sea-100: #dce9ff;
+  --color-deep-sea-200: #b3d1fe;
+  --color-deep-sea-300: #88bcfe;
+  --color-deep-sea-400: #45a5fd;
+  --color-deep-sea-500: #1390e8;
+  --color-deep-sea-600: #0e7bc7;
+  --color-deep-sea-700: #0a64a3;
+  --color-deep-sea-800: #065084; /* Default */
+  --color-deep-sea-900: #022948;
+  --color-deep-sea-950: #01192e;
+
+  /* Violent Violet Series */
+  --color-violent-violet-50: #f5f2fe;
+  --color-violent-violet-100: #e8e2fd;
+  --color-violent-violet-200: #d1c5fb;
+  --color-violent-violet-300: #bba7f9;
+  --color-violent-violet-400: #a789f7;
+  --color-violent-violet-500: #9469f5;
+  --color-violent-violet-600: #8244f2;
+  --color-violent-violet-700: #7122e2;
+  --color-violent-violet-800: #5718b1;
+  --color-violent-violet-900: #3e0f82;
+  --color-violent-violet-950: #320a6b;
+
+  /* Special Colors */
+  --color-metallic-yellow: #fdcc0d;
+}

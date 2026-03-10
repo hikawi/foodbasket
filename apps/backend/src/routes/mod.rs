@@ -1,4 +1,5 @@
 use axum::{Router, middleware};
+use tower_cookies::CookieManagerLayer;
 
 use crate::app::AppState;
 
@@ -35,5 +36,6 @@ pub fn main_routes(state: AppState) -> Router<AppState> {
             state.clone(),
             middlewares::origin_hydrate,
         ))
+        .layer(CookieManagerLayer::new())
         .layer(middleware::from_fn(middlewares::dynamic_cors))
 }
