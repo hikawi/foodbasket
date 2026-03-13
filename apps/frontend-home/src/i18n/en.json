@@ -4,10 +4,12 @@
     "description": "Let's start a dining journey",
     "hello": "Hello, World",
     "loading": "Loading",
-    "errorUnauthorized": "You are not logged in"
+    "errorUnauthorized": "You are not logged in",
+    "errorInternet": "Couldn't login. Is your internet out?"
   },
   "login": {
     "title": "Login",
+    "description": "Login to the FoodBasket platform to continue ordering the best culinary experience.",
     "emailAddress": "Email Address",
     "placeholderEmail": "john.doe@foodbasket.app",
     "password": "Password",
@@ -18,6 +20,23 @@
     "errorBadRequest": "Invalid email or password.",
     "errorWrongPassword": "Incorrect password",
     "errorAccountDoesntExist": "There is no account with that email",
+    "errorServer": "The server failed to check this. Please wait a moment.",
+    "errorInternet": "Couldn't login. Is your internet out?"
+  },
+  "register": {
+    "title": "Register",
+    "description": "Register with the FoodBasket platform to order a basket-full of freshness.",
+    "name": "Name",
+    "placeholderName": "John Doe",
+    "emailAddress": "Email Address",
+    "placeholderEmail": "john.doe@foodbasket.app",
+    "password": "Password",
+    "or": "or",
+    "registerWithGoogle": "Sign up with Google",
+    "cta": "Register",
+    "hasAnAccount": "Already have an account?",
+    "errorBadRequest": "Invalid email or password.",
+    "errorAccountConflict": "That account already exists.",
     "errorServer": "The server failed to check this. Please wait a moment.",
     "errorInternet": "Couldn't login. Is your internet out?"
   }

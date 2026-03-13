@@ -7,6 +7,5 @@ const translations = await getTranslations(Astro.currentLocale);
 ---
 
 <BaseLayout title={translations.index.title} description={translations.index.description}>
-  <h1>{translations.index.hello}</h1>
   <PlaceholderProfile tl={translations} client:load />
 </BaseLayout>
