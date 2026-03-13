@@ -6,18 +6,19 @@ const props = defineProps<{
   callback: string;
 }>();
 
+const name = ref("");
 const email = ref("");
 const password = ref("");
 const error = ref("");
 
-async function login() {
+async function register() {
   try {
     error.value = "";
-    const res = await fetch(`${import.meta.env.PUBLIC_API}/v1/auth/login`, {
+    const res = await fetch(`${import.meta.env.PUBLIC_API}/v1/auth/register`, {
       method: "POST",
       mode: "cors",
       credentials: "include",
-      body: JSON.stringify({ email: email.value, password: password.value }),
+      body: JSON.stringify({ name: name.value, email: email.value, password: password.value }),
       headers: {
         "Content-Type": "application/json",
       },
@@ -27,11 +28,8 @@ async function login() {
       case 400:
         error.value = "errorBadRequest";
         break;
-      case 403:
-        error.value = "errorWrongPassword";
-        break;
-      case 404:
-        error.value = "errorAccountDoesntExist";
+      case 409:
+        error.value = "errorAccountConflict";
         break;
       case 500:
         error.value = "errorServer";
@@ -50,24 +48,34 @@ async function login() {
 <template>
   <div class="max-w-xl flex flex-col gap-4 items-center justify-center w-full">
     <form
-      @submit.prevent="login"
+      @submit.prevent="register"
       class="p-6 rounded-xl shadow-md bg-white w-full flex flex-col gap-4"
     >
-      <h1 class="text-2xl font-bold text-center">{{ tl.login.title }}</h1>
+      <h1 class="text-2xl font-bold text-center">{{ tl.register.title }}</h1>
 
       <div class="w-full flex flex-col gap-2">
         <label class="flex flex-col gap-1 w-full">
-          {{ tl.login.emailAddress }}
+          {{ tl.register.name }}
+          <input
+            type="text"
+            class="w-full rounded-md placeholder:text-black/50 bg-violent-violet-50 outline-none px-2 py-1 duration-200 hover:ring-2 hover:ring-violent-violet-300 focus:ring-2 focus:ring-violent-violet-600"
+            :placeholder="tl.register.placeholderName"
+            v-model="name"
+          />
+        </label>
+
+        <label class="flex flex-col gap-1 w-full">
+          {{ tl.register.emailAddress }}
           <input
             type="email"
             class="w-full rounded-md placeholder:text-black/50 bg-violent-violet-50 outline-none px-2 py-1 duration-200 hover:ring-2 hover:ring-violent-violet-300 focus:ring-2 focus:ring-violent-violet-600"
-            :placeholder="tl.login.placeholderEmail"
+            :placeholder="tl.register.placeholderEmail"
             v-model="email"
           />
         </label>
 
         <label class="flex flex-col gap-1 w-full">
-          {{ tl.login.password }}
+          {{ tl.register.password }}
           <input
             type="password"
             class="w-full rounded-md placeholder:text-black/50 bg-violent-violet-50 outline-none px-2 py-1 duration-200 hover:ring-2 hover:ring-violent-violet-300 focus:ring-2 focus:ring-violent-violet-600"
@@ -77,7 +85,7 @@ async function login() {
 
         <div class="flex flex-row w-full gap-3.5 items-center">
           <div aria-hidden class="w-full bg-black/20 rounded-full h-px"></div>
-          <span class="text-black/20 min-w-fit">{{ tl.login.or }}</span>
+          <span class="text-black/20 min-w-fit">{{ tl.register.or }}</span>
           <div aria-hidden class="w-full bg-black/20 rounded-full h-px"></div>
         </div>
 
@@ -129,7 +137,7 @@ async function login() {
             </g>
           </svg>
 
-          {{ tl.login.loginWithGoogle }}
+          {{ tl.register.registerWithGoogle }}
         </button>
       </div>
 
@@ -137,19 +145,19 @@ async function login() {
         class="w-full bg-state-danger/5 p-4 rounded-xl text-state-danger font-semibold"
         v-if="error"
       >
-        {{ tl.login[error] }}
+        {{ tl.register[error] }}
       </span>
 
       <button
         class="bg-violent-violet-600 rounded-xl p-4 text-white font-semibold duration-200 hover:bg-violent-violet-700"
         type="submit"
       >
-        {{ tl.login.cta }}
+        {{ tl.register.cta }}
       </button>
     </form>
 
-    <a :href="`./register`" class="text-center underline text-chill-500">{{
-      tl.login.noAccount
+    <a :href="`./login`" class="text-center underline text-chill-500">{{
+      tl.register.hasAnAccount
     }}</a>
   </div>
 </template>
