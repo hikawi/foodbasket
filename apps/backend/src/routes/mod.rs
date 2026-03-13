@@ -7,11 +7,13 @@ pub mod auth;
 pub mod extract;
 pub mod health;
 pub mod middlewares;
+pub mod tenants;
 
 pub fn main_routes(state: AppState) -> Router<AppState> {
     Router::new()
         .nest("/auth", auth::routes())
         .merge(health::routes())
+        .nest("/tenants", tenants::routes())
         .layer(middleware::from_fn_with_state(
             state.clone(),
             middlewares::context_solidify,

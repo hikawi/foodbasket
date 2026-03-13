@@ -24,8 +24,7 @@ pub struct PolicyDocument {
     pub statements: Vec<PolicyStatement>,
 }
 
-#[derive(Debug)]
-#[allow(dead_code)]
+#[derive(Debug, sqlx::FromRow)]
 pub struct Policy {
     pub id: Uuid,
     pub tenant_id: Option<Uuid>,

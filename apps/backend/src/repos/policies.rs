@@ -1,11 +1,11 @@
-use sqlx::PgPool;
+use sqlx::PgExecutor;
 use uuid::Uuid;
 
 use crate::models::{Policy, PolicyDocument};
 use sqlx::types::Json;
 
 pub async fn get_system_policies(
-    pool: &PgPool,
+    executor: impl PgExecutor<'_>,
     system_profile_id: &Uuid,
 ) -> Result<Vec<Policy>, sqlx::Error> {
     sqlx::query_as!(
@@ -28,12 +28,12 @@ pub async fn get_system_policies(
         "#,
         system_profile_id,
     )
-    .fetch_all(pool)
+    .fetch_all(executor)
     .await
 }
 
 pub async fn get_tenant_staff_policies(
-    pool: &PgPool,
+    executor: impl PgExecutor<'_>,
     staff_profile_id: &Uuid,
     tenant_id: &Uuid,
 ) -> Result<Vec<Policy>, sqlx::Error> {
@@ -61,12 +61,12 @@ pub async fn get_tenant_staff_policies(
         staff_profile_id,
         tenant_id
     )
-    .fetch_all(pool)
+    .fetch_all(executor)
     .await
 }
 
 pub async fn get_branch_staff_policies(
-    pool: &PgPool,
+    executor: impl PgExecutor<'_>,
     staff_profile_id: &Uuid,
     tenant_id: &Uuid,
     branch_id: &Uuid,
@@ -92,12 +92,12 @@ pub async fn get_branch_staff_policies(
         tenant_id,
         branch_id
     )
-    .fetch_all(pool)
+    .fetch_all(executor)
     .await
 }
 
 pub async fn get_tenant_customer_policies(
-    pool: &PgPool,
+    executor: impl PgExecutor<'_>,
     customer_profile_id: &Uuid,
     tenant_id: &Uuid,
 ) -> Result<Vec<Policy>, sqlx::Error> {
@@ -120,12 +120,12 @@ pub async fn get_tenant_customer_policies(
         customer_profile_id,
         tenant_id
     )
-    .fetch_all(pool)
+    .fetch_all(executor)
     .await
 }
 
 pub async fn get_branch_customer_policies(
-    pool: &PgPool,
+    executor: impl PgExecutor<'_>,
     customer_profile_id: &Uuid,
     tenant_id: &Uuid,
     branch_id: &Uuid,
@@ -151,6 +151,29 @@ pub async fn get_branch_customer_policies(
         tenant_id,
         branch_id,
     )
-    .fetch_all(pool)
+    .fetch_all(executor)
+    .await
+}
+
+pub async fn insert_policy(
+    executor: impl PgExecutor<'_>,
+    tenant_id: Option<&Uuid>,
+    branch_id: Option<&Uuid>,
+    name: &str,
+    policy_document: &PolicyDocument,
+) -> Result<Policy, sqlx::Error> {
+    sqlx::query_as!(
+        Policy,
+        r#"
+    INSERT INTO policies (tenant_id, branch_id, name, statements)
+    VALUES ($1, $2, $3, $4)
+    RETURNING id, tenant_id, branch_id, name, statements as "statements: Json<PolicyDocument>", created_at, updated_at, deleted_at
+    "#,
+        tenant_id,
+        branch_id,
+        name,
+        Json(policy_document) as _,
+    )
+    .fetch_one(executor)
     .await
 }

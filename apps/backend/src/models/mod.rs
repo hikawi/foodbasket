@@ -8,11 +8,9 @@ mod system_profile;
 mod tenant;
 mod user;
 
-#[allow(unused_imports)]
-pub use assignment::Assignment;
+pub use assignment::{Assignment, AssignmentProfile};
 pub use branch::Branch;
 pub use customer_profile::CustomerProfile;
-#[allow(unused_imports)]
 pub use policy::{Policy, PolicyDocument, PolicyEffect, PolicyStatement};
 pub use scope_type::ScopeType;
 pub use staff_profile::StaffProfile;

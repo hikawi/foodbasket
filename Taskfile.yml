@@ -81,7 +81,7 @@ tasks:
   dev:frontends:
     desc: Start all Vue apps in parallel
     cmds:
-      - pnpm -r --parallel dev --host
+      - pnpm -r --parallel dev
 
   # Database migrations
   migrate:diff:

@@ -8,7 +8,7 @@ anyhow = "1.0.102"
 argon2 = "0.5.3"
 aws-config = "1.8.14"
 aws-sdk-s3 = "1.124.0"
-axum = "0.8.8"
+axum = { version = "0.8.8", features = ["json", "query", "ws"] }
 axum-test = "19.0.0"
 base64 = "0.22.1"
 chrono = { version = "0.4.44", features = ["serde"] }
