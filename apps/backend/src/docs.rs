@@ -23,6 +23,8 @@ use utoipa::{
         crate::routes::auth::handler::register,
         crate::routes::auth::handler::logout,
         crate::routes::auth::handler::get_me,
+        crate::routes::tenants::handler::get_tenants,
+        crate::routes::tenants::handler::create_tenant,
     ),
     modifiers(&SecurityAddon),
 )]

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, user_id, tenant_id, avatar_url, created_at, updated_at, deleted_at\n        FROM staff_profiles\n        WHERE user_id = $1 AND tenant_id = $2 AND deleted_at IS NULL\n        LIMIT 1\n        ",
+  "query": "\n        SELECT id, user_id, tenant_id, avatar_url, pin_code, created_at, updated_at, deleted_at\n        FROM staff_profiles\n        WHERE user_id = $1 AND tenant_id = $2 AND deleted_at IS NULL\n        LIMIT 1\n        ",
   "describe": {
     "columns": [
       {
@@ -25,16 +25,21 @@
       },
       {
         "ordinal": 4,
+        "name": "pin_code",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "updated_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "deleted_at",
         "type_info": "Timestamptz"
       }
@@ -50,10 +55,11 @@
       false,
       false,
       true,
+      true,
       false,
       false,
       true
     ]
   },
-  "hash": "691d8c21bcc713c00381586aa07229d2e6e6f9f55c7a018b76863bfdec6d489e"
+  "hash": "57e454ae6e23ba99faba274feef669a93e0710f4b4d8b32b9321d5e310d75448"
 }
