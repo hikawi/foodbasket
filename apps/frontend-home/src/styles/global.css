@@ -2,6 +2,7 @@
 
 @theme {
   --font-nunito: "Nunito", ".AppleSystemUIFont", "-apple-system", "sans-serif";
+  --font-chiron: "Chiron GoRound TC", ".AppleSystemUIFont", "-apple-system", "sans-serif";
 
   --color-state-danger: #ff383c;
 
