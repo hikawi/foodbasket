@@ -1,6 +1,10 @@
 use sqlx::PgPool;
 
-use crate::{models::User, repos, services};
+use crate::{
+    models::User,
+    repos,
+    services::{self, passwords::PasswordServiceError},
+};
 
 #[derive(thiserror::Error, Debug)]
 pub enum UserServiceError {
@@ -33,6 +37,12 @@ impl From<sqlx::Error> for UserServiceError {
     }
 }
 
+impl From<PasswordServiceError> for UserServiceError {
+    fn from(value: PasswordServiceError) -> Self {
+        Self::UnknownError(anyhow::Error::new(value))
+    }
+}
+
 impl UserService {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
@@ -56,12 +66,7 @@ impl UserService {
             .await?
             .ok_or(UserServiceError::UserNotFound)?;
 
-        let hash = user
-            .password
-            .as_deref()
-            .ok_or(UserServiceError::UserDoesNotUsePassword)?;
-
-        if !services::passwords::verify(password, hash) {
+        if !services::passwords::verify(password, &user.password) {
             return Err(UserServiceError::WrongPassword);
         }
 
@@ -76,19 +81,11 @@ impl UserService {
     /// - `UserServiceError::UnknownError` if there was an unexpected error.
     pub async fn register_user(
         &self,
-        name: &str,
         email: &str,
-        password: Option<&str>,
+        password: &str,
     ) -> Result<User, UserServiceError> {
-        let hashed_password = password
-            .map(services::passwords::hash)
-            .transpose()
-            .map_err(|e| UserServiceError::UnknownError(anyhow::anyhow!(e)))?;
-
-        let user =
-            repos::users::create_user(&self.pool, name, email, hashed_password.as_deref()).await?;
-
-        Ok(user)
+        let hashed = services::passwords::hash(password)?;
+        Ok(repos::users::create_user(&self.pool, email, &hashed).await?)
     }
 }
 
@@ -115,9 +112,8 @@ mod tests {
         let hashed_password = services::passwords::hash(raw_password).unwrap();
 
         sqlx::query!(
-            "INSERT INTO users (name, email, password, created_at, updated_at)
-             VALUES ($1, $2, $3, NOW(), NOW())",
-            "Test User",
+            "INSERT INTO users (email, password, created_at, updated_at)
+             VALUES ($1, $2, NOW(), NOW())",
             test_email,
             hashed_password,
         )
@@ -140,9 +136,8 @@ mod tests {
         let hashed_password = services::passwords::hash(raw_password).unwrap();
 
         sqlx::query!(
-            "INSERT INTO users (name, email, password, created_at, updated_at)
-             VALUES ($1, $2, $3, NOW(), NOW())",
-            "Test User",
+            "INSERT INTO users (email, password, created_at, updated_at)
+             VALUES ($1, $2, NOW(), NOW())",
             test_email,
             hashed_password,
         )
@@ -151,9 +146,7 @@ mod tests {
         .unwrap();
 
         let svc = UserService::new(pool);
-        let result = svc
-            .register_user("Test User", test_email, Some(raw_password))
-            .await;
+        let result = svc.register_user(test_email, raw_password).await;
 
         assert!(result.is_err());
         assert!(matches!(result, Err(UserServiceError::UserAlreadyExists)))
@@ -165,9 +158,7 @@ mod tests {
         let raw_password = "password123";
 
         let svc = UserService::new(pool);
-        let result = svc
-            .register_user("Test User", test_email, Some(raw_password))
-            .await;
+        let result = svc.register_user(test_email, raw_password).await;
 
         assert!(result.is_ok());
 

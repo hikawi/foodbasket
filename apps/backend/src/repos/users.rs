@@ -12,16 +12,10 @@ pub async fn find_by_email(pool: &PgPool, email: &str) -> Result<Option<User>, s
     .await
 }
 
-pub async fn create_user(
-    pool: &PgPool,
-    name: &str,
-    email: &str,
-    password: Option<&str>,
-) -> Result<User, sqlx::Error> {
+pub async fn create_user(pool: &PgPool, email: &str, password: &str) -> Result<User, sqlx::Error> {
     sqlx::query_as!(
         User,
-        "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *",
-        name,
+        "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
         email,
         password
     )

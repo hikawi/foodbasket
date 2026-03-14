@@ -5,72 +5,84 @@ parent: Product & Engineering Specifications
 
 # ES03 - Host, Tenant and Session Hydration
 
+## Revisions History
+
+| Version |    Date    | Changelog                                           |
+| :-----: | :--------: | --------------------------------------------------- |
+|   2.0   | 2026-03-05 | Changes the architecture from Go Echo to Rust Axum. |
+|   1.0   | 2026-02-03 | Initial version.                                    |
+
 ## Summary
 
-This document outlines the process of hydrating a context throughout the echo's
-pipeline to allow downstream handlers and middlewares to extract tenant-related
-information without having to repeatedly query cache or databases.
+This document outlines the process of 'hydrating' a handler's context throughout
+the pipeline of Axum routing.
 
-## Pipeline Diagram
+## Rationale
 
-The following diagram was drawn by an LLM.
+This process is done to provide the best level of isolation, without having to burden
+the client or the API users with a lot of query parameters, as most of them should
+be done via a browser. This logic may be changed later, but the logic of injecting
+them into handlers would not change.
 
-```plaintext
-Client (browser / iPad / POS terminal)
-          |
-          | HTTPS request
-          v
-[Public Internet]
-          |
-          v
-    VPS Public IP
-          |
-          |
-          v
-Caddy (Docker container, internal on :80)
-          |
-          |
-          v
-Echo / Go Backend (Docker container)
-          |
-          +--> [CORSMiddleware]
-          |      - Dynamic CORS middleware to adapt to what current tenants
-          |        there are registered with us.
-          |      - Uses Valkey for caching.
-          |
-          +--→ [HostHydrate Middleware]  <--- Reads Host header
-          |      - Extracts tenant_id from subdomain (e.g. twinbells)
-          |      - Validates domain suffix
-          |      - Sets c.Set("tenant_id", "twinbells")
-          |      - Sets c.Set("is_pos", true) if prefixed with POS
-          |
-          +--→ [SessionHydrate Middleware]
-          |      - Reads session cookie
-          |      - Loads session from Valkey
-          |      - Handles stale session here with rotated_to
-          |      - Sets c.Set("session", sessionData)
-          |
-          +--> [TenantHydrate Middleware]
-          |      - Reads sessionData from SessionHydrate.
-          |      - If not a guest, collect permissions if they are on a tenant's
-          |        host or POS host.
-          |      - Sets c.Set("permissions", permissions)
-          |
-          +--> [HasPermission Middleware] (OPTIONAL)
-          |      - Reads permissions from TenantHydrate
-          |      - Blocks with 403 Forbidden if not enough permissions.
-          |
-          v
-Route Handler (e.g. /menus, /orders, /inventory)
-          |
-          +--→ Uses c.Get("tenant_id") and c.Get("session")
-          |      - Fetches menus / data for the correct tenant
-          |      - Applies permissions from session
-          |
-          v
-Response back through Caddy → Nginx → Client
-```
+## The Pipeline
 
-The rationale for this is to allow tenant-level scoping in all endpoints, so clients
-don't have to keep appending a query parameter like `?tenant_id=edbdf736-1c2d-4035-8e70-81f1afd76bbf`
-every time they want to retrieve something, which is rather ugly in my opinion.
+The following pipeline was generated mostly by Gemini after feeding it the code
+available in `middlewares.rs`. I have fact checked these (should be up to date)
+and added my own edits.
+
+### Layer 1: Dynamic CORS
+
+- **Purpose**: Validates the `Origin` header.
+- **Result**: Sets CORS headers. Prevents unauthorized cross-origin browser requests.
+  Returns 204 for Preflight OPTIONS runs.
+- **Extension**: `OriginUrl` (Enum: Invalid, Valid(String)).
+
+> Warning! This layer does not block against valid origins, but invalid tenants.
+> This is the most lightweight layer.
+
+### Layer 2: Origin Hydration
+
+- **Purpose**: Determines "Where" the request is going.
+- **Logic**: Parses the Origin to identify if the context is `Admin`, `TenantPos`
+  (Staff), or `TenantHome` (Customer).
+- **Extension**: `OriginContext` (Enum: Admin, TenantPos(Uuid), TenantHome(Uuid),
+  Anonymous).
+
+### Layer 3: Session Hydration
+
+- **Purpose**: Determines "Who" is making the request.
+- **Logic**: Extracts `session_id` from Cookies and performs a lookup in **Valkey**.
+- **Extension**: `SessionContext` (Enum: Authenticated(User), Anonymous).
+
+### Layer 4: Profile Hydration
+
+- **Purpose**: Connects the "Who" to the "Where."
+- **Logic**:
+  - If `TenantPos` + `Authenticated` -> Fetches `StaffProfile`.
+  - If `TenantHome` + `Authenticated` -> Fetches `CustomerProfile`.
+  - Else -> Fetches `SystemProfile`.
+- **Extension**: `ProfileContext` (Enum: Staff(Arc), Customer(Arc), System(Arc),
+  Anonymous).
+
+### Layer 5: Branch Hydration
+
+- **Purpose**: Scopes the request to a physical location.
+- **Logic**: Extracts `X-Branch-ID` header. Verifies via Valkey `SMEMBERS` that
+  the branch belongs to the current `TenantID`.
+- **Extension**: `BranchContext` (Enum: Branch(Uuid), Anonymous).
+
+### Layer 6: Policy Extraction
+
+- **Purpose**: Fetches the raw security rules.
+- **Logic**: Executes a hierarchical SQL query (or cache lookup) based on the
+  `Profile` and `Branch` context.
+- **Extension**: `PolicyContext` (Enum: Authenticated(Arc<Vec\<Policy\>>), Anonymous).
+
+### Layer 7: Request Solidify
+
+- **Purpose**: Final assembly of the "God Object."
+- **Logic**:
+  - Consumes all previous extensions.
+  - Flattens `Vec<Policy>` into a `HashMap<String, bool>` inside `RequestContext`.
+  - Applies **Deny-Overrides-Allow** logic.
+- **Extension**: `Arc<RequestContext>`

@@ -19,11 +19,12 @@ use utoipa::{
     servers((url = "/v1", description = "Current version of the API")),
     paths(
         crate::routes::health::handler::health_check, 
-        crate::routes::debug::handler::debug_context, 
         crate::routes::auth::handler::login,
         crate::routes::auth::handler::register,
         crate::routes::auth::handler::logout,
         crate::routes::auth::handler::get_me,
+        crate::routes::tenants::handler::get_tenants,
+        crate::routes::tenants::handler::create_tenant,
     ),
     modifiers(&SecurityAddon),
 )]

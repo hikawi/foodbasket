@@ -16,11 +16,11 @@ use crate::{
     routes::{
         auth::{
             AuthError,
-            dtos::{GetMeResponse, PostLoginRequest, PostRegisterRequest},
+            dtos::{GetMeResponse, PostLoginRequest, PostRegisterRequest, ProfileContextResponse},
         },
-        extract::SessionContext,
+        extract::{BranchContext, OriginContext, ProfileContext, RequestContext, SessionContext},
     },
-    services::{SessionService, UserService, sessions::Session},
+    services::{Session, SessionService, UserService},
 };
 
 const SESSION_COOKIE_NAME: &str = "session_id";
@@ -111,7 +111,7 @@ pub async fn register(
         .map_err(|e| AuthError::ValidationFailed(e.to_string()))?;
 
     let user = user_service
-        .register_user(&body.name, &body.email, Some(&body.password))
+        .register_user(&body.email, &body.password)
         .await
         .map_err(AuthError::from)?;
 
@@ -191,20 +191,38 @@ pub async fn logout(
     security(("session_id" = [])),
 )]
 pub async fn get_me(
-    Extension(session): Extension<SessionContext>,
+    Extension(ctx): Extension<Arc<RequestContext>>,
 ) -> Result<Json<GetMeResponse>, AppError> {
-    match session {
-        SessionContext::Authenticated(sess) => Ok(Json(GetMeResponse {
-            id: sess
-                .user_id
-                .ok_or(AuthError::Unknown(anyhow::anyhow!("No user name")))?
-                .to_string(),
-            email: sess
-                .user_email
+    let (user_id, user_email) = match &ctx.session {
+        SessionContext::Authenticated(sess) => (
+            sess.user_id
+                .ok_or(AuthError::Unauthenticated("Not logged in".into()))?,
+            sess.user_email
                 .clone()
-                .ok_or(AuthError::Unknown(anyhow::anyhow!("No user email")))?
-                .to_string(),
-        })),
-        SessionContext::Anonymous => Err(AuthError::Unauthenticated("Session not found".into()))?,
-    }
+                .ok_or(AuthError::Unauthenticated("Not logged in".into()))?,
+        ),
+        _ => Err(AuthError::Unauthenticated("Not authenticated".into()))?,
+    };
+    let tenant_id = match ctx.origin {
+        OriginContext::TenantPos(uuid) | OriginContext::TenantHome(uuid) => Some(uuid),
+        _ => None,
+    };
+    let branch_id = match ctx.branch {
+        BranchContext::Branch(uuid) => Some(uuid),
+        _ => None,
+    };
+    let profile_ctx = match ctx.profile {
+        ProfileContext::Staff(_) => ProfileContextResponse::Staff,
+        ProfileContext::Customer(_) => ProfileContextResponse::Customer,
+        ProfileContext::System(_) => ProfileContextResponse::System,
+        _ => ProfileContextResponse::Anonymous,
+    };
+
+    Ok(Json(GetMeResponse {
+        user_id,
+        user_email,
+        tenant_id,
+        branch_id,
+        profile_context: profile_ctx,
+    }))
 }

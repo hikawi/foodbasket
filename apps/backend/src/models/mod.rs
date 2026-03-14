@@ -1,45 +1,19 @@
-use chrono::{DateTime, Utc};
-use uuid::Uuid;
+mod assignment;
+mod branch;
+mod customer_profile;
+mod policy;
+mod scope_type;
+mod staff_profile;
+mod system_profile;
+mod tenant;
+mod user;
 
-#[derive(Debug)]
-#[allow(dead_code)]
-pub struct User {
-    pub id: Uuid,
-    pub name: String,
-    pub email: String,
-    pub password: Option<String>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub deleted_at: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug)]
-#[allow(dead_code)]
-pub struct Tenant {
-    pub id: Uuid,
-    pub name: String,
-    pub slug: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub deleted_at: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug)]
-#[allow(dead_code)]
-pub struct Permission {
-    pub id: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub deleted_at: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug)]
-#[allow(dead_code)]
-pub struct Role {
-    pub id: Uuid,
-    pub name: String,
-    pub tenant_id: Uuid,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub deleted_at: Option<DateTime<Utc>>,
-}
+pub use assignment::{Assignment, AssignmentProfile};
+pub use branch::Branch;
+pub use customer_profile::CustomerProfile;
+pub use policy::{Policy, PolicyDocument, PolicyEffect, PolicyStatement};
+pub use scope_type::ScopeType;
+pub use staff_profile::StaffProfile;
+pub use system_profile::SystemProfile;
+pub use tenant::Tenant;
+pub use user::User;

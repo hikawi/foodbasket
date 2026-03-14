@@ -2,13 +2,16 @@ use axum::{http::StatusCode, response::IntoResponse};
 
 use crate::{
     api::responses::ErrorResponse,
-    routes::{auth::AuthError, middlewares::MiddlewareError},
+    routes::{auth::AuthError, middlewares::MiddlewareError, tenants::TenantError},
 };
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
     #[error(transparent)]
     Auth(#[from] AuthError),
+
+    #[error(transparent)]
+    Tenant(#[from] TenantError),
 
     #[error(transparent)]
     Middleware(#[from] MiddlewareError),
@@ -22,6 +25,7 @@ impl IntoResponse for AppError {
         let (status, code, message) = match self {
             Self::Auth(e) => e.extract(),
             Self::Middleware(e) => e.extract(),
+            Self::Tenant(e) => e.extract(),
             Self::Unknown(e) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "INTERNAL_SERVER_ERROR".into(),
