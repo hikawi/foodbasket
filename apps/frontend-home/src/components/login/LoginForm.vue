@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import { getTranslations, type Language } from "../../utils/i18n";
 
 const props = defineProps<{
-  tl: any;
+  lang: Language;
   callback: string;
 }>();
+
+const tl = computed(() => getTranslations(props.lang));
 
 const email = ref("");
 const password = ref("");
@@ -137,7 +140,7 @@ async function login() {
         class="w-full bg-state-danger/5 p-4 rounded-xl text-state-danger font-semibold"
         v-if="error"
       >
-        {{ tl.login[error] }}
+        {{ tl.login[error as keyof typeof tl.login] }}
       </span>
 
       <button

@@ -21,10 +21,12 @@ export default defineConfig({
     locales: ["en", "ja"],
     routing: {
       prefixDefaultLocale: true,
+      fallbackType: "redirect",
     },
   },
   trailingSlash: "never",
   adapter: node({
     mode: "standalone",
   }),
+  site: "https://foodbasket.app",
 });

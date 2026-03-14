@@ -1,11 +1,31 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import PlaceholderProfile from "../../components/home/PlaceholderProfile.vue";
+import WelcomeScreen from "../../components/home/WelcomeScreen.vue";
 import { getTranslations } from "../../utils/i18n";
 
-const translations = await getTranslations(Astro.currentLocale);
+const locale = Astro.currentLocale || "en";
+const translations = await getTranslations(locale);
 ---
 
 <BaseLayout title={translations.index.title} description={translations.index.description}>
-  <PlaceholderProfile tl={translations} client:load />
+  <main class="min-h-screen w-full h-fit flex items-center justify-center p-6 flex-col gap-8">
+    <div class="flex flex-col gap-8">
+      <div class="text-center">
+        <h1 class="text-2xl font-bold text-white">{translations.index.welcomeBack}</h1>
+        <p class="text-white">{translations.index.chooseWorkspace}</p>
+      </div>
+    </div>
+    <WelcomeScreen lang={locale} client:load />
+  </main>
 </BaseLayout>
+
+<style scoped>
+  main {
+    background: radial-gradient(
+      150% 100% at 50% 0%,
+      var(--color-violent-violet-600) 50%,
+      #ffffff 50.1%
+    );
+    background-attachment: fixed;
+  }
+</style>

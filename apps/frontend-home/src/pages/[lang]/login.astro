@@ -2,16 +2,14 @@
 import { getRelativeLocaleUrl } from "astro:i18n";
 import LoginForm from "../../components/login/LoginForm.vue";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getTranslations } from "../../utils/i18n";
 
 const locale = Astro.currentLocale || "en";
-const tl = await getTranslations(locale);
 const callbackUrl = Astro.url.searchParams.get("callback") || getRelativeLocaleUrl(locale, "");
 ---
 
 <BaseLayout title="Login" description="Login to the FoodBasket platform.">
-  <main class="font-inter min-h-screen w-full h-fit flex items-center justify-center p-6">
-    <LoginForm tl={tl} callback={callbackUrl} client:load />
+  <main class="min-h-screen w-full h-fit flex items-center justify-center p-6">
+    <LoginForm lang={locale as any} callback={callbackUrl} client:load />
   </main>
 </BaseLayout>
 
