@@ -2,16 +2,26 @@ use std::sync::Arc;
 
 use axum::{
     Extension, Json,
-    extract::{Query, State, rejection::{JsonRejection, QueryRejection}},
+    extract::{
+        Query, State,
+        rejection::{JsonRejection, QueryRejection},
+    },
 };
+use http::StatusCode;
 use validator::Validate;
 
 use crate::{
-    api::{requests::PaginationQuery, responses::{ErrorResponse, PaginatedResponse}},
+    api::{
+        requests::PaginationQuery,
+        responses::{ErrorResponse, PaginatedResponse},
+    },
     error::AppError,
     routes::{
         extract::{RequestContext, SessionContext},
-        tenants::{TenantError, dtos::{CreateTenantRequest, CreateTenantResponse, TenantDTO}},
+        tenants::{
+            TenantError,
+            dtos::{CreateTenantRequest, CreateTenantResponse, TenantDTO},
+        },
     },
     services::{TenantService, TenantServiceError},
 };
@@ -21,9 +31,9 @@ use crate::{
 /// This only retrieves a paginated response for staff profiles. For user profiles ordering from
 /// the tenants, please refer to the `customers` tag routes.
 #[utoipa::path(
-    get, 
-    path = "/tenants", 
-    tag = "pos", 
+    get,
+    path = "/tenants",
+    tag = "pos",
     responses(
         (status = 200, description = "Successful retrieval", body = PaginatedResponse<TenantDTO>),
         (status = 400, description = "Invalid query", body = ErrorResponse),
@@ -68,7 +78,7 @@ pub async fn get_tenants(
 #[utoipa::path(
     post,
     path = "/tenants",
-    tag = "pos", 
+    tag = "pos",
     security(("session_id" = [])),
     responses(
         (status = 201, description = "Successful creation", body = CreateTenantResponse),
@@ -80,24 +90,39 @@ pub async fn get_tenants(
     ),
 )]
 pub async fn create_tenant(
-    State(tenant_service): State<Arc<TenantService>>, 
+    State(tenant_service): State<Arc<TenantService>>,
     Extension(ctx): Extension<Arc<RequestContext>>,
     body: Result<Json<CreateTenantRequest>, JsonRejection>,
-) -> Result<Json<CreateTenantResponse>, AppError> {
+) -> Result<(StatusCode, Json<CreateTenantResponse>), AppError> {
     let Json(body) = body.map_err(TenantError::from)?;
     body.validate().map_err(TenantError::from)?;
 
     let user_id = match &ctx.session {
         SessionContext::Authenticated(sess) if sess.user_id.is_some() => sess.user_id.unwrap(),
-        _ => Err(TenantError::Unauthorized("User is not authenticated".into()))?,
+        _ => Err(TenantError::Unauthorized(
+            "User is not authenticated".into(),
+        ))?,
     };
 
     let slug = &body.slug;
-    let (tenant, _) = tenant_service.create_tenant(&user_id, &body.name, &body.slug).await.map_err(|e| match e {
-        TenantServiceError::SlugTaken => TenantError::SlugTaken(format!("{slug} is already taken!")),
-        TenantServiceError::SlugForbidden => TenantError::SlugForbidden(format!("{slug} is not allowed")),
-        _ => TenantError::InternalServer(e),
-    })?;
+    let (tenant, _) = tenant_service
+        .create_tenant(&user_id, &body.name, &body.slug, &body.policy_name)
+        .await
+        .map_err(|e| match e {
+            TenantServiceError::SlugTaken => {
+                TenantError::SlugTaken(format!("{slug} is already taken!"))
+            }
+            TenantServiceError::SlugForbidden => {
+                TenantError::SlugForbidden(format!("{slug} is not allowed"))
+            }
+            _ => TenantError::InternalServer(e),
+        })?;
 
-    Ok(Json(CreateTenantResponse { tenant_id: tenant.id, tenant_slug: tenant.slug.clone() }))
+    Ok((
+        StatusCode::CREATED,
+        Json(CreateTenantResponse {
+            tenant_id: tenant.id,
+            tenant_slug: tenant.slug.clone(),
+        }),
+    ))
 }

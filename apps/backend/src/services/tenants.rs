@@ -228,6 +228,7 @@ impl TenantService {
         user_id: &Uuid,
         name: &str,
         slug: &str,
+        policy_name: &str,
     ) -> Result<(Tenant, StaffProfile), TenantServiceError> {
         let slug = slug.to_lowercase();
         if BLOCKED_SLUGS.iter().any(|s| s.to_lowercase() == slug) {
@@ -259,7 +260,7 @@ impl TenantService {
             &mut *tx,
             Some(&tenant.id),
             None,
-            "Superadmin",
+            policy_name,
             &policy_doc,
         )
         .await?;

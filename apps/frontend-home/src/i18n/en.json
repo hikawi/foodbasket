@@ -12,7 +12,17 @@
     "noTenants": "You do not belong to or own any tenants",
     "createATenant": "Create a tenant",
     "noInvitations": "You do not have any pending invitations",
+    "tenantName": "Tenant Name",
+    "placeholderTenantName": "John Doe's Restaurant",
+    "tenantSlug": "Tenant Slug",
+    "placeholderTenantSlug": "john-doe-restaurant",
+    "roleName": "Administrator's Role Name",
+    "placeholderRoleName": "Superadmin",
+    "go": "Go",
     "errorUnauthorized": "You are not logged in",
+    "errorNewTenantBadRequest": "The inputted data may be invalid",
+    "errorSlugTaken": "That slug already exists. Please select another.",
+    "errorSlugForbidden": "That slug is reserved. You may not use it.",
     "errorInternet": "Couldn't login. Is your internet out?"
   },
   "login": {
