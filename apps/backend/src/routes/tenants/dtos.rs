@@ -1,4 +1,7 @@
+use std::sync::LazyLock;
+
 use chrono::{DateTime, Utc};
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -16,13 +19,21 @@ pub struct TenantDTO {
     pub updated_at: DateTime<Utc>,
 }
 
+static RE_SLUG: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^[a-z0-9]+(?:-[a-z0-9]+)*$").unwrap());
+
 #[derive(Deserialize, ToSchema, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateTenantRequest {
     #[validate(length(min = 3, message = "Name must be longer than 3 characters"))]
     pub name: String,
-    #[validate(length(min = 3, message = "Slug must be longer than 3 characters"))]
+    #[validate(
+        length(min = 3, message = "Slug must be longer than 3 characters"),
+        regex(path = *RE_SLUG, message = "Wee"),
+    )]
     pub slug: String,
+    #[validate(length(min = 1, message = "Policy name must be longer than 1 character"))]
+    pub policy_name: String,
 }
 
 #[derive(Serialize, ToSchema)]

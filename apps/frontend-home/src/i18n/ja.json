@@ -12,7 +12,17 @@
     "noTenants": "ワークスペースがありません",
     "createATenant": "ワークスペースを作成",
     "noInvitations": "招待状がありません",
+    "tenantName": "ワークスペース名前",
+    "placeholderTenantName": "太郎のレストラン",
+    "tenantSlug": "ワークスペーススラッグ",
+    "placeholderTenantSlug": "taro-restaurant",
+    "roleName": "管理者のロール名前",
+    "placeholderRoleName": "スーパーアドミン",
+    "go": "進む",
     "errorUnauthorized": "ログインしていません",
+    "errorNewTenantBadRequest": "ワークスペースの情報は無効かもしれません",
+    "errorSlugTaken": "あのスラッグはもう存在しているので、他を選択してください",
+    "errorSlugForbidden": "あのスラッグは予約済みのため、利用することができません",
     "errorInternet": "エラー発生してしまいました。インターネット接続をチェックしてください"
   },
   "login": {
