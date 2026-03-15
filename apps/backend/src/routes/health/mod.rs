@@ -5,5 +5,5 @@ use crate::app::AppState;
 pub mod handler;
 
 pub fn routes() -> Router<AppState> {
-    Router::new().route("/health", get(handler::health_check))
+    Router::new().route("/", get(handler::health_check))
 }

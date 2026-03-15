@@ -7,13 +7,15 @@ pub mod auth;
 pub mod extract;
 pub mod health;
 pub mod middlewares;
+pub mod staff;
 pub mod tenants;
 
 pub fn main_routes(state: AppState) -> Router<AppState> {
     Router::new()
         .nest("/auth", auth::routes())
-        .merge(health::routes())
+        .nest("/health", health::routes())
         .nest("/tenants", tenants::routes())
+        .nest("/staff", staff::routes())
         .layer(middleware::from_fn_with_state(
             state.clone(),
             middlewares::context_solidify,
@@ -36,8 +38,11 @@ pub fn main_routes(state: AppState) -> Router<AppState> {
         ))
         .layer(middleware::from_fn_with_state(
             state.clone(),
-            middlewares::origin_hydrate,
+            middlewares::app_hydrate,
+        ))
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            middlewares::tenant_hydrate,
         ))
         .layer(CookieManagerLayer::new())
-        .layer(middleware::from_fn(middlewares::dynamic_cors))
 }

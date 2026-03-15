@@ -18,7 +18,7 @@ use crate::{
             AuthError,
             dtos::{GetMeResponse, PostLoginRequest, PostRegisterRequest, ProfileContextResponse},
         },
-        extract::{BranchContext, OriginContext, ProfileContext, RequestContext, SessionContext},
+        extract::{BranchContext, ProfileContext, RequestContext, SessionContext, TenantContext},
     },
     services::{Session, SessionService, UserService},
 };
@@ -194,7 +194,7 @@ pub async fn get_me(
     Extension(ctx): Extension<Arc<RequestContext>>,
 ) -> Result<Json<GetMeResponse>, AppError> {
     let (user_id, user_email) = match &ctx.session {
-        SessionContext::Authenticated(sess) => (
+        SessionContext(Some(sess)) => (
             sess.user_id
                 .ok_or(AuthError::Unauthenticated("Not logged in".into()))?,
             sess.user_email
@@ -204,11 +204,11 @@ pub async fn get_me(
         _ => Err(AuthError::Unauthenticated("Not authenticated".into()))?,
     };
     let tenant_id = match ctx.origin {
-        OriginContext::TenantPos(uuid) | OriginContext::TenantHome(uuid) => Some(uuid),
+        TenantContext::Tenant(uuid) => Some(uuid),
         _ => None,
     };
     let branch_id = match ctx.branch {
-        BranchContext::Branch(uuid) => Some(uuid),
+        BranchContext(Some(uuid)) => Some(uuid),
         _ => None,
     };
     let profile_ctx = match ctx.profile {

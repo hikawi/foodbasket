@@ -2,7 +2,6 @@ use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 #[derive(Debug)]
-#[allow(dead_code)]
 pub struct StaffProfile {
     pub id: Uuid,
     pub user_id: Uuid,

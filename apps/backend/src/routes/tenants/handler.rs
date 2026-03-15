@@ -33,7 +33,7 @@ use crate::{
 #[utoipa::path(
     get,
     path = "/tenants",
-    tag = "pos",
+    tag = "tenants",
     responses(
         (status = 200, description = "Successful retrieval", body = PaginatedResponse<TenantDTO>),
         (status = 400, description = "Invalid query", body = ErrorResponse),
@@ -55,7 +55,7 @@ pub async fn get_tenants(
     query.validate().map_err(TenantError::from)?;
 
     let user_id = match &ctx.session {
-        SessionContext::Authenticated(sess) if sess.user_id.is_some() => sess.user_id.unwrap(),
+        SessionContext(Some(sess)) if sess.user_id.is_some() => sess.user_id.unwrap(),
         _ => Err(TenantError::Unauthorized(
             "User is not authenticated".into(),
         ))?,
@@ -78,7 +78,7 @@ pub async fn get_tenants(
 #[utoipa::path(
     post,
     path = "/tenants",
-    tag = "pos",
+    tag = "tenants",
     security(("session_id" = [])),
     responses(
         (status = 201, description = "Successful creation", body = CreateTenantResponse),
@@ -98,7 +98,7 @@ pub async fn create_tenant(
     body.validate().map_err(TenantError::from)?;
 
     let user_id = match &ctx.session {
-        SessionContext::Authenticated(sess) if sess.user_id.is_some() => sess.user_id.unwrap(),
+        SessionContext(Some(sess)) if sess.user_id.is_some() => sess.user_id.unwrap(),
         _ => Err(TenantError::Unauthorized(
             "User is not authenticated".into(),
         ))?,
