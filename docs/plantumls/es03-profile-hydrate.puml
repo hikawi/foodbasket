@@ -1,0 +1,49 @@
+@startuml
+
+title Profile Hydration Layer
+
+start
+
+* Checks injected SessionContext
+
+if (available?) then (yes)
+
+* Checks TenantContext and AppContext
+
+if (is valid tenant, storefront app and authenticated?) then (yes)
+
+* Retrieves CustomerProfile with user_id and tenant_id
+
+:Injects ProfileContext::Customer(customer_profile_id)
+if succeeded, Injects ProfileContext::Anonymous if failed;
+
+elseif (is valid tenant, pos app and authenticated?) then (yes)
+
+* Retrieves StaffProfile with user_id and tenant_id
+
+:Injects ProfileContext::Staff(staff_profile_id)
+if succeeded, Injects ProfileContext::Anonymous if failed;
+
+elseif (is admin, any app and authenticated?) then (yes)
+
+* Retrieves SystemProfile with user_id and tenant_id
+
+:Injects ProfileContext::System(staff_profile_id)
+if succeeded, Injects ProfileContext::Anonymous if failed;
+
+else (no)
+
+* Injects ProfileContext::Anonymous
+
+endif
+
+else (no)
+
+* Injects ProfileContext::Anonymous
+
+endif
+
+stop
+
+@enduml
+

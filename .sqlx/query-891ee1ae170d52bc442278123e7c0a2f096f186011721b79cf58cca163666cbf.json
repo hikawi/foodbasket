@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n    SELECT count(t.*)\n    FROM tenants t\n    INNER JOIN staff_profiles sp ON sp.tenant_id = t.id\n    WHERE sp.user_id = $1 AND t.deleted_at IS NULL AND sp.deleted_at IS NULL\n    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "891ee1ae170d52bc442278123e7c0a2f096f186011721b79cf58cca163666cbf"
+}

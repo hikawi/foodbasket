@@ -4,7 +4,7 @@ use axum::extract::FromRef;
 use fred::prelude::Client as CacheClient;
 use sqlx::PgPool;
 
-use crate::services::{SessionService, TenantService, UserService};
+use crate::services::{PolicyService, ProfileService, SessionService, TenantService, UserService};
 
 pub struct AppConfig {
     pub db_url: String,
@@ -14,14 +14,20 @@ pub struct AppConfig {
 }
 
 #[derive(Clone)]
+pub struct AppServices {
+    pub sessions: Arc<SessionService>,
+    pub tenants: Arc<TenantService>,
+    pub users: Arc<UserService>,
+    pub profiles: Arc<ProfileService>,
+    pub policies: Arc<PolicyService>,
+}
+
+#[derive(Clone)]
 pub struct AppState {
     pub config: Arc<AppConfig>,
     pub db: PgPool,
     pub cache: CacheClient,
-
-    pub session_service: Arc<SessionService>,
-    pub tenant_service: Arc<TenantService>,
-    pub user_service: Arc<UserService>,
+    pub services: AppServices,
 }
 
 impl AppConfig {
@@ -58,17 +64,29 @@ impl FromRef<AppState> for CacheClient {
 
 impl FromRef<AppState> for Arc<TenantService> {
     fn from_ref(input: &AppState) -> Self {
-        input.tenant_service.clone()
+        input.services.tenants.clone()
     }
 }
 
 impl FromRef<AppState> for Arc<SessionService> {
     fn from_ref(input: &AppState) -> Self {
-        input.session_service.clone()
+        input.services.sessions.clone()
     }
 }
 impl FromRef<AppState> for Arc<UserService> {
     fn from_ref(input: &AppState) -> Self {
-        input.user_service.clone()
+        input.services.users.clone()
+    }
+}
+
+impl FromRef<AppState> for Arc<PolicyService> {
+    fn from_ref(input: &AppState) -> Self {
+        input.services.policies.clone()
+    }
+}
+
+impl FromRef<AppState> for Arc<ProfileService> {
+    fn from_ref(input: &AppState) -> Self {
+        input.services.profiles.clone()
     }
 }

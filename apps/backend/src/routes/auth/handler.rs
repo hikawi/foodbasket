@@ -18,9 +18,9 @@ use crate::{
             AuthError,
             dtos::{GetMeResponse, PostLoginRequest, PostRegisterRequest},
         },
-        extract::SessionContext,
+        extract::{BranchContext, ProfileContext, RequestContext, TenantContext},
     },
-    services::{SessionService, UserService, sessions::Session},
+    services::{Session, SessionService, UserService},
 };
 
 const SESSION_COOKIE_NAME: &str = "session_id";
@@ -77,7 +77,7 @@ pub async fn login(
     cookie.set_secure(cfg.cookie_secure);
     cookies.add(cookie);
 
-    tracing::info!(status = 200, email = %user.email);
+    tracing::info!(status = 200, email = %user.email, "successful login");
     Ok(Json(MessageResponse {
         message: "ok".into(),
     }))
@@ -111,7 +111,7 @@ pub async fn register(
         .map_err(|e| AuthError::ValidationFailed(e.to_string()))?;
 
     let user = user_service
-        .register_user(&body.name, &body.email, Some(&body.password))
+        .register_user(&body.email, &body.password)
         .await
         .map_err(AuthError::from)?;
 
@@ -133,6 +133,7 @@ pub async fn register(
     cookie.set_secure(cfg.cookie_secure);
     cookies.add(cookie);
 
+    tracing::info!(status = 201, "email" = %user.email, "successful registration");
     Ok((
         StatusCode::CREATED,
         Json(MessageResponse {
@@ -171,6 +172,7 @@ pub async fn logout(
     cookie.set_path("/");
     cookies.remove(cookie);
 
+    tracing::info!(status = 200, "session_id" = %&sess_id, "successful logout");
     Ok(Json(MessageResponse {
         message: "ok".into(),
     }))
@@ -188,23 +190,47 @@ pub async fn logout(
         (status = 401, description = "Unauthenticated", body = ErrorResponse),
         (status = 500, description = "Internal server error", body = ErrorResponse),
     ),
-    security(("session_id" = [])),
+    security(("session_id" = []), ("branch_id" = []), ("tenant_slug" = [])),
 )]
 pub async fn get_me(
-    Extension(session): Extension<SessionContext>,
+    State(user_service): State<Arc<UserService>>,
+    Extension(ctx): Extension<Arc<RequestContext>>,
 ) -> Result<Json<GetMeResponse>, AppError> {
-    match session {
-        SessionContext::Authenticated(sess) => Ok(Json(GetMeResponse {
-            id: sess
-                .user_id
-                .ok_or(AuthError::Unknown(anyhow::anyhow!("No user name")))?
-                .to_string(),
-            email: sess
-                .user_email
-                .clone()
-                .ok_or(AuthError::Unknown(anyhow::anyhow!("No user email")))?
-                .to_string(),
-        })),
-        SessionContext::Anonymous => Err(AuthError::Unauthenticated("Session not found".into()))?,
-    }
+    let user_id = ctx
+        .session
+        .0
+        .clone()
+        .and_then(|s| s.user_id)
+        .ok_or(AuthError::Unauthenticated("Not logged in".into()))?;
+    let tenant_id = match ctx.origin {
+        TenantContext::Tenant(uuid) => Some(uuid),
+        _ => None,
+    };
+    let branch_id = match ctx.branch {
+        BranchContext(Some(uuid)) => Some(uuid),
+        _ => None,
+    };
+
+    // Fetch the user.
+    let user = user_service
+        .get_user(&user_id)
+        .await
+        .map_err(|_| AuthError::Unauthenticated("Unknown user".into()))?;
+
+    // Get the profile
+    let (cp, sp, syp) = match &ctx.profile {
+        ProfileContext::Customer(cp) => (Some(cp.clone()), None, None),
+        ProfileContext::Staff(sp) => (None, Some(sp.clone()), None),
+        ProfileContext::System(syp) => (None, None, Some(syp.clone())),
+        _ => (None, None, None),
+    };
+
+    Ok(Json(GetMeResponse {
+        user: user.into(),
+        tenant_id,
+        branch_id,
+        customer_profile: cp.map(|p| p.into()),
+        staff_profile: sp.map(|p| p.into()),
+        system_profile: syp.map(|p| p.into()),
+    }))
 }

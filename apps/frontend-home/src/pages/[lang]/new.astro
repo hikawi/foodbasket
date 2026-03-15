@@ -1,0 +1,24 @@
+---
+import NewTenantForm from "../../components/new/NewTenantForm.vue";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import type { Language } from "../../utils/i18n";
+
+const lang: Language = (Astro.currentLocale || "en") as Language;
+---
+
+<BaseLayout title="New Tenant" description="Let's register your restaurant.">
+  <main class="min-h-screen w-full h-fit flex items-center justify-center p-6">
+    <NewTenantForm lang={lang} client:load />
+  </main>
+</BaseLayout>
+
+<style scoped>
+  main {
+    background: radial-gradient(
+      150% 100% at 50% 0%,
+      var(--color-violent-violet-600) 50%,
+      #ffffff 50.1%
+    );
+    background-attachment: fixed;
+  }
+</style>

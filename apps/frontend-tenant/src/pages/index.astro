@@ -1,5 +1,5 @@
 ---
-
+import PlaceholderProfile from "../components/home/PlaceholderProfile.vue";
 ---
 
 <html lang="en">
@@ -13,5 +13,15 @@
   </head>
   <body>
     <h1>You should be on *.foodbasket.app</h1>
+    <PlaceholderProfile
+      tl={{
+        index: {
+          loading: "Loading",
+          errorNotTenant: "That tenant is not available",
+          errorUnauthorized: "You are not logged in",
+        },
+      }}
+      client:load
+    />
   </body>
 </html>

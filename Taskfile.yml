@@ -81,7 +81,20 @@ tasks:
   dev:frontends:
     desc: Start all Vue apps in parallel
     cmds:
-      - pnpm -r --parallel dev --host
+      - pnpm -r --parallel dev
+
+  # Database migrations
+  migrate:diff:
+    desc: Generate the diffs for a target schema.
+    dir: apps/backend
+    cmds:
+      - atlas migrate diff --dev-url docker://postgres/18-alpine/dev --to file://schema.sql --dir file://migrations {{.CLI_ARGS}}
+
+  migrate:apply:
+    desc: Apply the migrations
+    dir: apps/backend
+    cmds:
+      - cargo sqlx migrate run
 
   # -------------------------
   # Docker stuff

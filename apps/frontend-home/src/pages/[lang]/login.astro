@@ -1,0 +1,25 @@
+---
+import { getRelativeLocaleUrl } from "astro:i18n";
+import LoginForm from "../../components/login/LoginForm.vue";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const locale = Astro.currentLocale || "en";
+const callbackUrl = Astro.url.searchParams.get("callback") || getRelativeLocaleUrl(locale, "");
+---
+
+<BaseLayout title="Login" description="Login to the FoodBasket platform.">
+  <main class="min-h-screen w-full h-fit flex items-center justify-center p-6">
+    <LoginForm lang={locale as any} callback={callbackUrl} client:load />
+  </main>
+</BaseLayout>
+
+<style scoped>
+  main {
+    background: radial-gradient(
+      150% 100% at 50% 0%,
+      var(--color-violent-violet-600) 50%,
+      #ffffff 50.1%
+    );
+    background-attachment: fixed;
+  }
+</style>

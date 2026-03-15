@@ -1,0 +1,26 @@
+@startuml
+
+title App Context Hydration Layer
+
+start
+
+* Checks X-App-Context header
+
+if (is "store"?) then (yes)
+
+* Injects AppContext::Storefront
+
+elseif (is "pos"?) then (yes)
+
+* Injects AppContext::Pos
+
+else
+
+* Injects AppContext::None
+
+endif
+
+stop
+
+@enduml
+
