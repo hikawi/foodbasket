@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import { getTranslations, type Language } from "../../utils/i18n";
 
 const props = defineProps<{
-  tl: any;
+  lang: Language;
   callback: string;
 }>();
 
-const name = ref("");
+const tl = computed(() => getTranslations(props.lang));
+
 const email = ref("");
 const password = ref("");
 const error = ref("");
@@ -18,7 +20,7 @@ async function register() {
       method: "POST",
       mode: "cors",
       credentials: "include",
-      body: JSON.stringify({ name: name.value, email: email.value, password: password.value }),
+      body: JSON.stringify({ email: email.value, password: password.value }),
       headers: {
         "Content-Type": "application/json",
       },
@@ -54,16 +56,6 @@ async function register() {
       <h1 class="text-2xl font-bold text-center">{{ tl.register.title }}</h1>
 
       <div class="w-full flex flex-col gap-2">
-        <label class="flex flex-col gap-1 w-full">
-          {{ tl.register.name }}
-          <input
-            type="text"
-            class="w-full rounded-md placeholder:text-black/50 bg-violent-violet-50 outline-none px-2 py-1 duration-200 hover:ring-2 hover:ring-violent-violet-300 focus:ring-2 focus:ring-violent-violet-600"
-            :placeholder="tl.register.placeholderName"
-            v-model="name"
-          />
-        </label>
-
         <label class="flex flex-col gap-1 w-full">
           {{ tl.register.emailAddress }}
           <input

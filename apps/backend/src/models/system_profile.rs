@@ -5,6 +5,7 @@ use uuid::Uuid;
 #[allow(dead_code)]
 pub struct SystemProfile {
     pub id: Uuid,
+    pub name: String,
     pub user_id: Uuid,
     pub avatar_url: Option<String>,
     pub created_at: DateTime<Utc>,

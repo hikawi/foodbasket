@@ -246,7 +246,8 @@ impl TenantService {
             })?;
 
         // Add a staff profile.
-        let staff_profile = repos::profiles::insert_staff(&mut *tx, user_id, &tenant.id).await?;
+        let staff_profile =
+            repos::profiles::insert_staff(&mut *tx, user_id, "Admin", &tenant.id).await?;
 
         // Add a superadmin policy.
         let policy_doc = PolicyDocument {
@@ -271,7 +272,7 @@ impl TenantService {
             AssignmentProfile::Staff(staff_profile.id),
             &policy.id,
             ScopeType::Tenant,
-            &Uuid::nil(),
+            &tenant.id,
         )
         .await?;
 
@@ -561,12 +562,13 @@ mod tests {
 
         sqlx::query(
             r#"
-        INSERT INTO staff_profiles (user_id, tenant_id) VALUES ($3, $1);
+        INSERT INTO staff_profiles (user_id, name, tenant_id) VALUES ($3, $4, $1);
         "#,
         )
         .bind(test_tenant_id1)
         .bind(test_tenant_id2)
         .bind(test_user_id)
+        .bind("Test Profile")
         .execute(&pool)
         .await?;
 

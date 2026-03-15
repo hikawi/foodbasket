@@ -40,6 +40,7 @@ CREATE INDEX idx_users_deleted_at ON users(deleted_at);
 
 CREATE TABLE customer_profiles ( -- Explicitly ONLY for customers ordering. Kinda like swapping accounts in Discord/Slack/Atlassian.
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
     user_id UUID NOT NULL REFERENCES users(id),
     tenant_id UUID NOT NULL REFERENCES tenants(id),
     avatar_url TEXT DEFAULT NULL,
@@ -52,6 +53,7 @@ CREATE INDEX idx_customer_profiles_deleted_at ON customer_profiles(deleted_at);
 
 CREATE TABLE staff_profiles ( -- Staff's specific profiles for RBAC at tenant level.
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
     user_id UUID NOT NULL REFERENCES users(id),
     tenant_id UUID NOT NULL REFERENCES tenants(id),
     avatar_url TEXT DEFAULT NULL,
@@ -65,6 +67,7 @@ CREATE INDEX idx_staff_profiles_deleted_at ON staff_profiles(deleted_at);
 
 CREATE TABLE system_profiles ( -- System-wide profiles
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
     user_id UUID NOT NULL REFERENCES users(id),
     avatar_url TEXT DEFAULT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
