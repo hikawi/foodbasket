@@ -3,5 +3,13 @@
     "loading": "ロード中",
     "errorNotTenant": "このスラッグは無効です",
     "errorUnauthorized": "ログインしていません"
+  },
+  "navigationBar": {
+    "dashboard": "ダッシュボード",
+    "orders": "オーダー",
+    "tables": "テーブル",
+    "menus": "メニュー",
+    "users": "ユーザー",
+    "more": "他"
   }
 }

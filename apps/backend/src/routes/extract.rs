@@ -101,44 +101,35 @@ impl RequestContext {
         }
     }
 
-    /// Checks if the current context has permission to perform a specific action.
-    /// Follows the logic: Explicit Deny > Explicit Allow > Implicit Deny.
     pub fn has_permission(&self, action: &str) -> bool {
         if self.policies_set.is_empty() {
             return false;
         }
 
-        // 1. Look up the action in our pre-calculated map.
-        // .get() returns Option<&bool>.
-        // We map that to a simple bool, defaulting to 'false' if the key doesn't exist.
-        match self.policies_set.get(action) {
-            Some(allowed) => *allowed, // Returns true if Allow, false if Deny
-            None => {
-                // 2. Optional: Check for global wildcards if the specific action wasn't found.
-                // This allows a "pos:*" permission to cover "pos:orders:create".
-                self.check_wildcards(action)
-            }
+        // 1. Check for ANY explicit deny first (Specific OR Wildcard)
+        // If we find a specific Deny, or a wildcard that matches and is Deny, return false.
+        if let Some(false) = self.policies_set.get(action) {
+            return false;
         }
-    }
 
-    /// Helper to handle pattern matching (e.g., "pos:*" or "*")
-    fn check_wildcards(&self, action: &str) -> bool {
-        let mut allowed = false;
-
+        // We can't return true yet! We must check if a wildcard Deny exists.
+        let mut wildcard_allow = false;
         for (perm, effect) in self.policies_set.iter() {
             if perm.ends_with('*') {
                 let prefix = &perm[..perm.len() - 1];
                 if action.starts_with(prefix) {
-                    // If we find an explicit Deny wildcard, return false immediately (highest priority)
                     if !*effect {
-                        return false;
+                        return false; // Explicit wildcard deny
                     }
-                    // If we find an Allow wildcard, note it but keep looking for potential Denies
-                    allowed = true;
+                    wildcard_allow = true;
                 }
             }
         }
 
-        allowed
+        // 2. If we reach here, no Denies exist.
+        // Return true if we had a specific Allow OR a wildcard Allow.
+        let specific_allow = self.policies_set.get(action).copied().unwrap_or(false);
+
+        specific_allow || wildcard_allow
     }
 }

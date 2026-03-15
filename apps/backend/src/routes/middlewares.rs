@@ -88,6 +88,7 @@ pub async fn tenant_hydrate(
                 .map_err(|_| MiddlewareError::InvalidTenant)?;
             match val {
                 "admin" => TenantContext::Admin,
+                "pos" => TenantContext::Anonymous,
                 slug => TenantContext::Tenant(
                     tenant_service
                         .get_id_by_slug(&slug.to_lowercase())
@@ -288,10 +289,8 @@ pub async fn policy_hydrate(
         }
     };
 
-    req.extensions_mut().insert(match policies {
-        Some(policies) => PolicyContext(Some(Arc::new(policies))),
-        _ => PolicyContext(None),
-    });
+    req.extensions_mut()
+        .insert(PolicyContext(policies.map(Arc::new)));
 
     Ok(next.run(req).await)
 }

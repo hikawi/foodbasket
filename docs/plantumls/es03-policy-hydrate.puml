@@ -1,0 +1,44 @@
+@startuml
+
+title Policy Hydration Layer
+
+start
+
+* Checks TenantContext
+* Checks BranchContext
+* Checks ProfileContext
+
+switch (result?)
+
+case (valid tenant, customer profile)
+
+:Fetches tenant-wide customer policies if branch is None
+Fetches branch-wide customer policies if branch is valid;
+
+case (valid tenant, staff profile)
+
+:Fetches tenant-wide staff policies if branch is None
+Fetches branch-wide staff policies if branch is valid;
+
+case (admin tenant, system profile)
+
+:Fetches platform-wide system policies;
+
+endswitch
+
+* Returns Option<Vec<Policy>>
+
+if (is some?) then (yes)
+
+* Injects PolicyContext(Some(Arc(Vec<Policy>)))
+
+else (no)
+
+* Injects PolicyContext(None)
+
+endif
+
+stop
+
+@enduml
+
