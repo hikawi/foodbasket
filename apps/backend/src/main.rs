@@ -2,7 +2,9 @@ use std::{sync::Arc, time::Duration};
 
 use axum::Router;
 use fred::prelude::{ClientLike, TcpConfig};
+use http::{Method, header};
 use tokio::net::TcpListener;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tracing_subscriber::EnvFilter;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -15,6 +17,7 @@ mod cache_keys;
 mod docs;
 mod error;
 mod models;
+mod permissions;
 mod repos;
 mod routes;
 mod services;
@@ -69,9 +72,37 @@ async fn main() -> anyhow::Result<()> {
         },
     };
 
+    // Setup CORS layer.
+    let cors = CorsLayer::new()
+        .allow_credentials(true)
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::PATCH,
+            Method::DELETE,
+            Method::OPTIONS,
+        ])
+        .allow_headers([
+            header::CONTENT_TYPE,
+            header::HeaderName::from_static("x-tenant-slug"),
+            header::HeaderName::from_static("x-branch-id"),
+            header::HeaderName::from_static("x-app-context"),
+        ])
+        .allow_origin(AllowOrigin::predicate(
+            move |origin: &header::HeaderValue, _config: &axum::http::request::Parts| {
+                let origin_str = origin.to_str().unwrap_or("");
+                origin_str.ends_with(".foodbasket.app")
+                    || origin_str == "https://foodbasket.app"
+                    || origin_str.ends_with(".foodbasket.localhost")
+                    || origin_str == "http://foodbasket.localhost"
+            },
+        ));
+
     let app = Router::new()
         .nest("/v1", routes::main_routes(state.clone()))
         .merge(SwaggerUi::new("/swagger").url("/api-docs/openapi.json", docs::ApiDocs::openapi()))
+        .layer(cors)
         .with_state(state);
 
     tracing::info!("server started on port 8080");

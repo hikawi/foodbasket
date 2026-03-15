@@ -46,7 +46,7 @@ pub async fn get_branches(
         r#"
         SELECT id, tenant_id, name, created_at, updated_at, deleted_at
         FROM branches
-        WHERE tenant_id = $1"#,
+        WHERE tenant_id = $1 AND deleted_at IS NULL"#,
         tenant_id
     )
     .fetch_all(executor)
@@ -62,7 +62,7 @@ pub async fn count_staff_tenants(
     SELECT count(t.*)
     FROM tenants t
     INNER JOIN staff_profiles sp ON sp.tenant_id = t.id
-    WHERE sp.user_id = $1
+    WHERE sp.user_id = $1 AND t.deleted_at IS NULL AND sp.deleted_at IS NULL
     "#,
         user_id,
     )
@@ -82,7 +82,7 @@ pub async fn get_staff_tenants(
     SELECT t.id, t.name, t.slug, t.created_at, t.updated_at, t.deleted_at
     FROM tenants t
     INNER JOIN staff_profiles sp ON sp.tenant_id = t.id
-    WHERE sp.user_id = $1
+    WHERE sp.user_id = $1 AND t.deleted_at IS NULL AND sp.deleted_at IS NULL
     ORDER BY name
     OFFSET $2
     LIMIT $3

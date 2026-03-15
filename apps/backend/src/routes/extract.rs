@@ -7,36 +7,34 @@ use crate::{
     services::Session,
 };
 
-#[derive(Debug, Clone)]
-#[allow(dead_code)]
-pub enum OriginUrl {
-    Valid(String),
-    Invalid,
-}
-
-#[derive(Debug, Clone)]
-#[allow(dead_code)]
-pub enum OriginContext {
-    TenantPos(Uuid),
-    TenantHome(Uuid),
-    Pos,
+/// Represents the type of tenant we're scoping to in our chain of handlers and middlewares.
+#[derive(Debug, Clone, Copy)]
+pub enum TenantContext {
+    /// The tenant's slug is captured and correctly resolved.
+    Tenant(Uuid),
+    /// The admin panel of the platform for managing it as a whole.
     Admin,
+    /// The ANY type of Tenant Context. Default fallback.
     Anonymous,
 }
 
-#[derive(Debug, Clone)]
-#[allow(dead_code)]
-pub enum BranchContext {
-    Branch(Uuid),
-    Anonymous,
+/// Represents the type of application we're querying for.
+#[derive(Debug, Clone, Copy)]
+pub enum AppContext {
+    /// The sale frontpage for our tenants.
+    Storefront,
+    /// The POS management system for our tenants.
+    Pos,
+    /// Default fallback. Represents the platform's homepage or admin panel.
+    None,
 }
 
+/// Represents a branch if it was resolved.
+#[derive(Debug, Clone, Copy)]
+pub struct BranchContext(pub Option<Uuid>);
+
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
-pub enum SessionContext {
-    Authenticated(Arc<Session>),
-    Anonymous,
-}
+pub struct SessionContext(pub Option<Arc<Session>>);
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -51,16 +49,12 @@ pub enum ProfileContext {
 }
 
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
-pub enum PolicyContext {
-    Authenticated(Arc<Vec<Policy>>),
-    Anonymous,
-}
+pub struct PolicyContext(pub Option<Arc<Vec<Policy>>>);
 
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct RequestContext {
-    pub origin: OriginContext,
+    pub origin: TenantContext,
     pub session: SessionContext,
     pub profile: ProfileContext,
     pub branch: BranchContext,
@@ -71,7 +65,7 @@ pub struct RequestContext {
 
 impl RequestContext {
     pub fn new(
-        origin: OriginContext,
+        origin: TenantContext,
         session: SessionContext,
         profile: ProfileContext,
         branch: BranchContext,
@@ -79,7 +73,7 @@ impl RequestContext {
     ) -> Self {
         let mut map = HashMap::new();
 
-        if let PolicyContext::Authenticated(ref policies) = policies {
+        if let PolicyContext(Some(ref policies)) = policies {
             for policy in policies.iter() {
                 let policy_doc = &policy.statements.0;
                 for statement in &policy_doc.statements {
@@ -109,8 +103,11 @@ impl RequestContext {
 
     /// Checks if the current context has permission to perform a specific action.
     /// Follows the logic: Explicit Deny > Explicit Allow > Implicit Deny.
-    #[allow(dead_code)]
     pub fn has_permission(&self, action: &str) -> bool {
+        if self.policies_set.is_empty() {
+            return false;
+        }
+
         // 1. Look up the action in our pre-calculated map.
         // .get() returns Option<&bool>.
         // We map that to a simple bool, defaulting to 'false' if the key doesn't exist.

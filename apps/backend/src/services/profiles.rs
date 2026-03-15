@@ -12,6 +12,9 @@ pub enum ProfileServiceError {
     #[error("Profile could not be found")]
     ProfileNotFound,
 
+    #[error("Invalid parameters passed by developer")]
+    InvalidParameters,
+
     #[error("Database error: {0}")]
     DatabaseError(#[from] sqlx::Error),
 }
@@ -55,5 +58,33 @@ impl ProfileService {
             Some(profile) => Ok(profile),
             None => Err(ProfileServiceError::ProfileNotFound),
         }
+    }
+
+    pub async fn get_staff_by_tenant(
+        &self,
+        tenant_id: &Uuid,
+        branch_id: Option<&Uuid>,
+        page: i64,
+        per_page: i64,
+    ) -> Result<(Vec<StaffProfile>, i64), ProfileServiceError> {
+        if page <= 0 || per_page <= 0 {
+            return Err(ProfileServiceError::InvalidParameters);
+        }
+
+        let offset = (page - 1) * per_page;
+        Ok(match branch_id {
+            Some(branch_id) => {
+                repos::profiles::find_all_staff_by_tenant_id_and_branch_id(
+                    &self.pool, tenant_id, branch_id, offset, per_page,
+                )
+                .await?
+            }
+            None => {
+                repos::profiles::find_all_staff_by_tenant_id(
+                    &self.pool, tenant_id, offset, per_page,
+                )
+                .await?
+            }
+        })
     }
 }

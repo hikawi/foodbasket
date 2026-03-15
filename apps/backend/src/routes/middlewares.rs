@@ -4,34 +4,28 @@ use axum::{
     Extension,
     extract::{Request, State},
     middleware::Next,
-    response::{IntoResponse, Response},
+    response::Response,
 };
-use http::{
-    Method, StatusCode,
-    header::{self, InvalidHeaderValue},
-};
+use http::{StatusCode, header::InvalidHeaderValue};
 use tower_cookies::Cookies;
 use uuid::Uuid;
 
 use crate::{
     error::AppError,
     routes::extract::{
-        BranchContext, OriginContext, OriginUrl, PolicyContext, ProfileContext, RequestContext,
-        SessionContext,
+        AppContext, BranchContext, PolicyContext, ProfileContext, RequestContext, SessionContext,
+        TenantContext,
     },
     services::{PolicyService, ProfileService, SessionService, TenantService, TenantServiceError},
 };
 
 #[derive(Debug, thiserror::Error)]
 pub enum MiddlewareError {
-    #[error("INVALID_ORIGIN")]
-    InvalidOrigin,
-
-    #[error("SERVICE_UNAVAILABLE")]
-    ServiceUnavailable,
-
     #[error("FAILED_TO_SET_HEADERS")]
     FailedToSetHeaders,
+
+    #[error("INVALID_TENANT")]
+    InvalidTenant,
 
     #[error("UNKNOWN_TENANT")]
     UnknownTenant,
@@ -56,15 +50,10 @@ impl MiddlewareError {
     pub fn extract(self) -> (StatusCode, String, String) {
         let code = self.to_string();
         match self {
-            Self::InvalidOrigin => (
+            Self::InvalidTenant => (
                 StatusCode::BAD_REQUEST,
                 code.clone(),
-                "Malformed origin".into(),
-            ),
-            Self::ServiceUnavailable => (
-                StatusCode::SERVICE_UNAVAILABLE,
-                code.clone(),
-                "That service is currently down".into(),
+                "Malformed tenant slug".into(),
             ),
             Self::UnknownTenant => (
                 StatusCode::NOT_FOUND,
@@ -85,119 +74,56 @@ impl MiddlewareError {
     }
 }
 
-/// Applies a dynamic CORS middleware or layer that checks the Origin header at runtime to return
-/// the correct CORS headers for browsers. This is necessary due to multi-tenancy and not knowing
-/// what users might register their slugs as.
-pub async fn dynamic_cors(mut req: Request, next: Next) -> Result<Response, AppError> {
-    let method = req.method().clone();
-    let origin_header = req
-        .headers()
-        .get(header::ORIGIN)
-        .and_then(|v| v.to_str().ok())
-        .map(|s| s.to_owned());
-
-    // Not a browser request. Ignore.
-    // Also inject an invalid origin.
-    if origin_header.is_none() {
-        req.extensions_mut().insert(OriginUrl::Invalid);
-        return Ok(next.run(req).await);
-    }
-
-    let origin = origin_header.unwrap();
-    let url = url::Url::parse(&origin).map_err(|_| MiddlewareError::InvalidOrigin)?;
-    let host = url.host_str().ok_or(MiddlewareError::InvalidOrigin)?;
-
-    // If it is preflight
-    if method == Method::OPTIONS {
-        return Ok((
-            StatusCode::NO_CONTENT,
-            [
-                (header::ACCESS_CONTROL_ALLOW_ORIGIN, origin.clone()),
-                (
-                    header::ACCESS_CONTROL_ALLOW_METHODS,
-                    "GET,POST,PUT,PATCH,DELETE,OPTIONS".into(),
-                ),
-                (
-                    header::ACCESS_CONTROL_ALLOW_HEADERS,
-                    "Content-Type, X-Branch-ID".into(),
-                ),
-                (header::ACCESS_CONTROL_ALLOW_CREDENTIALS, "true".into()),
-                (header::VARY, "Origin".into()),
-            ],
-        )
-            .into_response());
-    }
-
-    // Inject the origin, since we know it's a valid origin.
-    req.extensions_mut()
-        .insert(OriginUrl::Valid(host.to_owned()));
-
-    // Otherwise, just attach headers and move on.
-    let mut res = next.run(req).await;
-
-    // Attach headers to response.
-    let headers = res.headers_mut();
-    headers.insert(
-        header::ACCESS_CONTROL_ALLOW_ORIGIN,
-        origin.parse().map_err(MiddlewareError::from)?,
-    );
-    headers.insert(
-        header::ACCESS_CONTROL_ALLOW_HEADERS,
-        "Content-Type, X-Branch-ID".parse().unwrap(),
-    );
-    headers.insert(
-        header::ACCESS_CONTROL_ALLOW_CREDENTIALS,
-        "true".parse().map_err(MiddlewareError::from)?,
-    );
-    headers.insert(header::VARY, "Origin".parse().unwrap());
-
-    Ok(res)
-}
-
-/// Applies a layer that extracts the Origin header out of the request, and check whether it's a
+/// Applies a layer that extracts the X-Tenant-Slug header out of the request, and check whether it's a
 /// valid host in our infrastructure.
-pub async fn origin_hydrate(
+pub async fn tenant_hydrate(
     State(tenant_service): State<Arc<TenantService>>,
     mut req: Request,
     next: Next,
 ) -> Result<Response, AppError> {
-    let origin = match req.extensions().get::<OriginUrl>() {
-        Some(OriginUrl::Valid(origin)) => origin.to_owned(),
-        _ => {
-            // Inject invalid hydration and ignore.
-            req.extensions_mut().insert(OriginContext::Anonymous);
-            return Ok(next.run(req).await);
+    let tenant_context = match req.headers().get("x-tenant-slug") {
+        Some(header) => {
+            let val = header
+                .to_str()
+                .map_err(|_| MiddlewareError::InvalidTenant)?;
+            match val {
+                "admin" => TenantContext::Admin,
+                slug => TenantContext::Tenant(
+                    tenant_service
+                        .get_id_by_slug(&slug.to_lowercase())
+                        .await
+                        .map_err(MiddlewareError::from)?
+                        .ok_or(MiddlewareError::UnknownTenant)?,
+                ),
+            }
         }
+        None => TenantContext::Anonymous,
     };
 
-    // Parse subdomain (assume format: https://tenant.[pos.]foodbasket.app)
-    let parts: Vec<&str> = origin.split(".").collect();
-
-    req.extensions_mut()
-        .insert(match (parts.as_slice(), parts.len()) {
-            (_, len) if len > 4 => Err(MiddlewareError::ServiceUnavailable)?,
-            (["pos", "foodbasket", "app" | "localhost"], 3) => OriginContext::Pos,
-            (["admin", "foodbasket", "app" | "localhost"], 3) => OriginContext::Admin,
-            ([slug, "foodbasket", "app" | "localhost"], 3) => OriginContext::TenantHome(
-                // Need to check if it's valid by slug.
-                tenant_service
-                    .get_id_by_slug(slug)
-                    .await
-                    .map_err(MiddlewareError::from)?
-                    .ok_or(MiddlewareError::UnknownTenant)?,
-            ),
-            ([slug, "pos", "foodbasket", "app" | "localhost"], 4) => OriginContext::TenantPos(
-                tenant_service
-                    .get_id_by_slug(slug)
-                    .await
-                    .map_err(MiddlewareError::from)?
-                    .ok_or(MiddlewareError::UnknownTenant)?,
-            ),
-            _ => OriginContext::Anonymous,
-        });
+    req.extensions_mut().insert(tenant_context);
 
     // We injected the origin context.
     // We can now move forward.
+    Ok(next.run(req).await)
+}
+
+/// A layer to hydrate the AppContext for the request based on the x-app-context header value and the previous
+/// layer's extension. This middleware is guaranteed to run after tenant_hydrate.
+pub async fn app_hydrate(mut req: Request, next: Next) -> Result<Response, AppError> {
+    let app_context = match req.extensions().get::<TenantContext>() {
+        Some(&TenantContext::Tenant(_)) => match req.headers().get("x-app-context") {
+            Some(val) => match val.to_str() {
+                Ok(s) if s.to_lowercase() == "pos" => AppContext::Pos,
+                Ok(s) if s.to_lowercase() == "store" => AppContext::Storefront,
+                _ => AppContext::None,
+            },
+            _ => AppContext::None,
+        },
+        _ => AppContext::None,
+    };
+
+    req.extensions_mut().insert(app_context);
+
     Ok(next.run(req).await)
 }
 
@@ -212,10 +138,10 @@ pub async fn session_hydrate(
 ) -> Result<Response, AppError> {
     let session_ctx = match cookies.get("session_id") {
         Some(cookie) => match session_service.get(cookie.value()).await {
-            Ok(session) => SessionContext::Authenticated(Arc::new(session)),
-            Err(_) => SessionContext::Anonymous,
+            Ok(session) => SessionContext(Some(Arc::new(session))),
+            Err(_) => SessionContext(None),
         },
-        None => SessionContext::Anonymous,
+        None => SessionContext(None),
     };
 
     req.extensions_mut().insert(session_ctx);
@@ -226,15 +152,14 @@ pub async fn session_hydrate(
 /// context, reads the profile. There are 3 separations for best isolation, as staff_profiles,
 /// customer_profiles, system_profiles are all separate, but link to the same user.
 pub async fn profile_hydrate(
-    Extension(origin): Extension<OriginContext>,
-    Extension(session): Extension<SessionContext>,
     State(profile_service): State<Arc<ProfileService>>,
     mut req: Request,
     next: Next,
 ) -> Result<Response, AppError> {
     // Attempt to read the profile based on the session and origin.
-    let sess = match session {
-        SessionContext::Authenticated(sess) => sess,
+    // SessionContext holds an Arc<Session>.
+    let sess = match req.extensions().get::<SessionContext>() {
+        Some(SessionContext(Some(sess))) => sess.clone(),
         _ => {
             // If not authenticated. Why would we hydrate profiles?
             req.extensions_mut().insert(ProfileContext::Anonymous);
@@ -242,9 +167,12 @@ pub async fn profile_hydrate(
         }
     };
 
-    let ctx = match (origin, sess.user_id) {
+    let tenant_ctx = req.extensions().get::<TenantContext>();
+    let app_ctx = req.extensions().get::<AppContext>();
+
+    let ctx = match (tenant_ctx, app_ctx, sess.user_id) {
         // If it is in tenant context and authenticated, parse as customer profiles.
-        (OriginContext::TenantHome(tenant_id), Some(user_id)) => {
+        (Some(TenantContext::Tenant(tenant_id)), Some(AppContext::Storefront), Some(user_id)) => {
             match profile_service
                 .get_customer_profile(&user_id, &tenant_id)
                 .await
@@ -254,7 +182,7 @@ pub async fn profile_hydrate(
             }
         }
         // If it is in POS context and authenticated, parse as staff profiles.
-        (OriginContext::TenantPos(tenant_id), Some(user_id)) => {
+        (Some(TenantContext::Tenant(tenant_id)), Some(AppContext::Pos), Some(user_id)) => {
             match profile_service
                 .get_staff_profile(&user_id, &tenant_id)
                 .await
@@ -263,11 +191,13 @@ pub async fn profile_hydrate(
                 _ => ProfileContext::Anonymous,
             }
         }
-        // If it is in another context and authenticated, parse as system profiles.
-        (_, Some(user_id)) => match profile_service.get_system_profile(&user_id).await {
-            Ok(profile) => ProfileContext::System(Arc::new(profile)),
-            _ => ProfileContext::Anonymous,
-        },
+        // If it is in admin context and authenticated, parse as system profiles.
+        (Some(TenantContext::Admin), _, Some(user_id)) => {
+            match profile_service.get_system_profile(&user_id).await {
+                Ok(profile) => ProfileContext::System(Arc::new(profile)),
+                _ => ProfileContext::Anonymous,
+            }
+        }
         // Otherwise, that means user_id is probably None.
         _ => ProfileContext::Anonymous,
     };
@@ -280,31 +210,28 @@ pub async fn profile_hydrate(
 /// looking at. Basically just to not have the stupid query ?branch_id which is extremely ugly on
 /// the frontend!
 pub async fn branch_hydrate(
-    Extension(origin_ctx): Extension<OriginContext>,
     State(tenant_service): State<Arc<TenantService>>,
     mut req: Request,
     next: Next,
 ) -> Result<Response, AppError> {
     let branch_id = req
         .headers()
-        .get("X-Branch-ID")
+        .get("x-branch-id")
         .and_then(|v| v.to_str().ok())
         .and_then(|v| Uuid::parse_str(v).ok());
 
-    let branch_ctx = match (branch_id, origin_ctx) {
-        (
-            Some(branch_id),
-            OriginContext::TenantPos(tenant_id) | OriginContext::TenantHome(tenant_id),
-        ) => {
+    let tenant_ctx = req.extensions().get::<TenantContext>();
+    let branch_ctx = match (branch_id, tenant_ctx) {
+        (Some(branch_id), Some(&TenantContext::Tenant(tenant_id))) => {
             match tenant_service
                 .is_branch_of_tenant(&branch_id, &tenant_id)
                 .await
             {
-                Ok(true) => BranchContext::Branch(branch_id),
-                _ => BranchContext::Anonymous,
+                Ok(true) => BranchContext(Some(branch_id)),
+                _ => BranchContext(None),
             }
         }
-        _ => BranchContext::Anonymous,
+        _ => BranchContext(None),
     };
 
     req.extensions_mut().insert(branch_ctx);
@@ -315,46 +242,46 @@ pub async fn branch_hydrate(
 /// run a calculate IF AND ONLY IF all other middlewares succeeded in querying or extracting the
 /// context needed. Otherwise, this injects an empty PolicyContext.
 pub async fn policy_hydrate(
-    Extension(origin_ctx): Extension<OriginContext>,
-    Extension(profile_ctx): Extension<ProfileContext>,
-    Extension(branch_ctx): Extension<BranchContext>,
     State(policy_service): State<Arc<PolicyService>>,
     mut req: Request,
     next: Next,
 ) -> Result<Response, AppError> {
+    let tenant_ctx = req.extensions().get::<TenantContext>();
+    let profile_ctx = req.extensions().get::<ProfileContext>();
+    let branch_ctx = req.extensions().get::<BranchContext>();
+
+    let branch_id = match branch_ctx {
+        Some(BranchContext(Some(uuid))) => Some(uuid),
+        _ => None,
+    };
+
     // We can safely extract extensions because it always has a fallback option (Anonymous).
     // We start extracting based on the combination of the three.
-    let policies = match (origin_ctx, profile_ctx, branch_ctx) {
+    let policies = match (tenant_ctx, profile_ctx, branch_id) {
         // A customer is looking at the tenant's webpage.
         (
-            OriginContext::TenantHome(tenant_id),
-            ProfileContext::Customer(customer_id),
-            branch_ctx,
-        ) => {
-            // Fetch policies for this customer for that tenant.
-            let branch_id = match branch_ctx {
-                BranchContext::Branch(ref branch_id) => Some(branch_id),
-                BranchContext::Anonymous => None,
-            };
-            policy_service
-                .get_customer_policies(&customer_id.id, &tenant_id, branch_id)
-                .await
-                .ok()
-        }
+            Some(TenantContext::Tenant(tenant_id)),
+            Some(ProfileContext::Customer(customer_profile)),
+            branch_id,
+        ) => policy_service
+            .get_customer_policies(&customer_profile.id, &tenant_id, branch_id)
+            .await
+            .ok(),
         // A staff is looking at the tenant's staff system.
-        (OriginContext::TenantPos(tenant_id), ProfileContext::Staff(staff_id), branch_ctx) => {
-            let branch_id = match branch_ctx {
-                BranchContext::Branch(ref branch_id) => Some(branch_id),
-                BranchContext::Anonymous => None,
-            };
+        (
+            Some(TenantContext::Tenant(tenant_id)),
+            Some(ProfileContext::Staff(staff_profile)),
+            branch_id,
+        ) => policy_service
+            .get_staff_policies(&staff_profile.id, &tenant_id, branch_id)
+            .await
+            .ok(),
+        // A system user looking at admin.
+        (Some(TenantContext::Admin), Some(ProfileContext::System(system_profile)), _) => {
             policy_service
-                .get_staff_policies(&staff_id.id, &tenant_id, branch_id)
+                .get_system_policies(&system_profile.id)
                 .await
                 .ok()
-        }
-        // A normal user looking at anything?
-        (_, ProfileContext::System(system_id), _) => {
-            policy_service.get_system_policies(&system_id.id).await.ok()
         }
         // For other cases, they are invalid and should be ignored.
         _ => {
@@ -364,8 +291,8 @@ pub async fn policy_hydrate(
     };
 
     req.extensions_mut().insert(match policies {
-        Some(policies) => PolicyContext::Authenticated(Arc::new(policies)),
-        _ => PolicyContext::Anonymous,
+        Some(policies) => PolicyContext(Some(Arc::new(policies))),
+        _ => PolicyContext(None),
     });
 
     Ok(next.run(req).await)
@@ -373,7 +300,7 @@ pub async fn policy_hydrate(
 
 /// Just a final layer that compacts everything into one object for handlers to handle easily.
 pub async fn context_solidify(
-    Extension(origin_ctx): Extension<OriginContext>,
+    Extension(origin_ctx): Extension<TenantContext>,
     Extension(session_ctx): Extension<SessionContext>,
     Extension(profile_ctx): Extension<ProfileContext>,
     Extension(branch_ctx): Extension<BranchContext>,
