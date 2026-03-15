@@ -7,6 +7,7 @@ use crate::models::{CustomerProfile, StaffProfile, SystemProfile};
 #[derive(Debug)]
 struct StaffProfileRow {
     pub id: Uuid,
+    pub name: String,
     pub user_id: Uuid,
     pub tenant_id: Uuid,
     pub pin_code: Option<String>,
@@ -21,6 +22,7 @@ impl From<StaffProfileRow> for StaffProfile {
     fn from(value: StaffProfileRow) -> Self {
         Self {
             id: value.id,
+            name: value.name,
             user_id: value.user_id,
             tenant_id: value.tenant_id,
             avatar_url: value.avatar_url,
@@ -40,7 +42,7 @@ pub async fn find_customer(
     sqlx::query_as!(
         CustomerProfile,
         r#"
-        SELECT id, user_id, tenant_id, avatar_url, created_at, updated_at, deleted_at
+        SELECT id, name, user_id, tenant_id, avatar_url, created_at, updated_at, deleted_at
         FROM customer_profiles
         WHERE user_id = $1 AND tenant_id = $2 AND deleted_at IS NULL
         LIMIT 1
@@ -60,7 +62,7 @@ pub async fn find_staff(
     sqlx::query_as!(
         StaffProfile,
         r#"
-        SELECT id, user_id, tenant_id, avatar_url, pin_code, created_at, updated_at, deleted_at
+        SELECT id, name, user_id, tenant_id, avatar_url, pin_code, created_at, updated_at, deleted_at
         FROM staff_profiles
         WHERE user_id = $1 AND tenant_id = $2 AND deleted_at IS NULL
         LIMIT 1
@@ -95,7 +97,7 @@ pub async fn find_all_staff_by_tenant_id(
     .fetch_all(pool)
     .await?;
 
-    let count = rows.get(0).map(|v| v.total_count).unwrap_or(0);
+    let count = rows.first().map(|v| v.total_count).unwrap_or(0);
     let entities = rows
         .into_iter()
         .map(StaffProfile::from)
@@ -133,7 +135,7 @@ pub async fn find_all_staff_by_tenant_id_and_branch_id(
     .fetch_all(pool)
     .await?;
 
-    let count = rows.get(0).map(|v| v.total_count).unwrap_or(0);
+    let count = rows.first().map(|v| v.total_count).unwrap_or(0);
     let entities = rows
         .into_iter()
         .map(StaffProfile::from)
@@ -149,7 +151,7 @@ pub async fn find_system(
     sqlx::query_as!(
         SystemProfile,
         r#"
-        SELECT id, user_id, avatar_url, created_at, updated_at, deleted_at
+        SELECT id, name, user_id, avatar_url, created_at, updated_at, deleted_at
         FROM system_profiles
         WHERE user_id = $1 AND deleted_at IS NULL
         LIMIT 1
@@ -163,16 +165,18 @@ pub async fn find_system(
 pub async fn insert_staff(
     pool: impl Executor<'_, Database = Postgres>,
     user_id: &Uuid,
+    name: &str,
     tenant_id: &Uuid,
 ) -> Result<StaffProfile, sqlx::Error> {
     sqlx::query_as!(
         StaffProfile,
         r#"
-        INSERT INTO staff_profiles (user_id, tenant_id) VALUES ($1, $2)
+        INSERT INTO staff_profiles (user_id, tenant_id, name) VALUES ($1, $2, $3)
         RETURNING *
         "#,
         user_id,
         tenant_id,
+        name
     )
     .fetch_one(pool)
     .await

@@ -173,8 +173,9 @@ pub async fn profile_hydrate(
     let ctx = match (tenant_ctx, app_ctx, sess.user_id) {
         // If it is in tenant context and authenticated, parse as customer profiles.
         (Some(TenantContext::Tenant(tenant_id)), Some(AppContext::Storefront), Some(user_id)) => {
+            tracing::info!("Hydrating customer_profiles");
             match profile_service
-                .get_customer_profile(&user_id, &tenant_id)
+                .get_customer_profile(&user_id, tenant_id)
                 .await
             {
                 Ok(profile) => ProfileContext::Customer(Arc::new(profile)),
@@ -183,10 +184,7 @@ pub async fn profile_hydrate(
         }
         // If it is in POS context and authenticated, parse as staff profiles.
         (Some(TenantContext::Tenant(tenant_id)), Some(AppContext::Pos), Some(user_id)) => {
-            match profile_service
-                .get_staff_profile(&user_id, &tenant_id)
-                .await
-            {
+            match profile_service.get_staff_profile(&user_id, tenant_id).await {
                 Ok(profile) => ProfileContext::Staff(Arc::new(profile)),
                 _ => ProfileContext::Anonymous,
             }
@@ -264,7 +262,7 @@ pub async fn policy_hydrate(
             Some(ProfileContext::Customer(customer_profile)),
             branch_id,
         ) => policy_service
-            .get_customer_policies(&customer_profile.id, &tenant_id, branch_id)
+            .get_customer_policies(&customer_profile.id, tenant_id, branch_id)
             .await
             .ok(),
         // A staff is looking at the tenant's staff system.
@@ -273,7 +271,7 @@ pub async fn policy_hydrate(
             Some(ProfileContext::Staff(staff_profile)),
             branch_id,
         ) => policy_service
-            .get_staff_policies(&staff_profile.id, &tenant_id, branch_id)
+            .get_staff_policies(&staff_profile.id, tenant_id, branch_id)
             .await
             .ok(),
         // A system user looking at admin.

@@ -4,6 +4,7 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub struct StaffProfile {
     pub id: Uuid,
+    pub name: String,
     pub user_id: Uuid,
     pub tenant_id: Uuid,
     pub pin_code: Option<String>,

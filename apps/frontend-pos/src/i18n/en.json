@@ -3,5 +3,13 @@
     "loading": "Loading",
     "errorNotTenant": "That tenant doesn't exist",
     "errorUnauthorized": "You are not logged in"
+  },
+  "navigationBar": {
+    "dashboard": "Dashboard",
+    "orders": "Orders",
+    "tables": "Tables",
+    "menus": "Menus",
+    "users": "Users",
+    "more": "More"
   }
 }

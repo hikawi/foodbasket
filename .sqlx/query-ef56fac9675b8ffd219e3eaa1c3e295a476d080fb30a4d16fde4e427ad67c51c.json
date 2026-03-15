@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n    SELECT t.id, t.name, t.slug, t.created_at, t.updated_at, t.deleted_at\n    FROM tenants t\n    INNER JOIN staff_profiles sp ON sp.tenant_id = t.id\n    WHERE sp.user_id = $1\n    ORDER BY name\n    OFFSET $2\n    LIMIT $3\n    ",
+  "query": "\n        SELECT id, tenant_id, name, created_at, updated_at, deleted_at\n        FROM branches\n        WHERE tenant_id = $1 AND deleted_at IS NULL",
   "describe": {
     "columns": [
       {
@@ -10,12 +10,12 @@
       },
       {
         "ordinal": 1,
-        "name": "name",
-        "type_info": "Text"
+        "name": "tenant_id",
+        "type_info": "Uuid"
       },
       {
         "ordinal": 2,
-        "name": "slug",
+        "name": "name",
         "type_info": "Text"
       },
       {
@@ -36,9 +36,7 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid",
-        "Int8",
-        "Int8"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -50,5 +48,5 @@
       true
     ]
   },
-  "hash": "8e007062a6c00051c720298861adb9803540533c05d54ce61f58af38ea4d270d"
+  "hash": "ef56fac9675b8ffd219e3eaa1c3e295a476d080fb30a4d16fde4e427ad67c51c"
 }

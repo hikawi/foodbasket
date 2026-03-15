@@ -14,7 +14,7 @@ use crate::{
     error::AppError,
     permissions,
     routes::{
-        extract::{PolicyContext, RequestContext, TenantContext},
+        extract::{RequestContext, TenantContext},
         staff::{StaffError, dto::StaffProfileDTO},
     },
     services::{ProfileService, ProfileServiceError},
@@ -29,7 +29,7 @@ use crate::{
         ("page" = i64, Query, minimum = 1),
         ("per_page" = i64, Query, minimum = 1),
     ),
-    security(("session_id" = []), ("branch_id" = []), ("tenant_id" = [])),
+    security(("session_id" = []), ("branch_id" = []), ("tenant_slug" = []), ("app_context" = [])),
     responses(
         (status = 200, description = "Successful retrieval", body = PaginatedResponse<StaffProfileDTO>),
         (status = 400, description = "Invalid query or invalid branch ID", body = ErrorResponse),
@@ -42,15 +42,6 @@ pub async fn get_staff(
     Extension(ctx): Extension<Arc<RequestContext>>,
     query: Result<Query<PaginationQuery>, QueryRejection>,
 ) -> Result<Json<PaginatedResponse<StaffProfileDTO>>, AppError> {
-    if let PolicyContext(Some(vec)) = &ctx.policies {
-        tracing::info!("PolicyContext is Authenticated");
-        vec.iter().for_each(|p| {
-            println!("{}", p.statements.encode_to_string().unwrap());
-        })
-    } else {
-        tracing::info!("PolicyContext is Anonymous");
-    }
-
     if !ctx.has_permission(permissions::pos::staff::READ) {
         return Err(StaffError::Unauthorized("Unauthorized".into()))?;
     }

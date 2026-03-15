@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, user_id, avatar_url, created_at, updated_at, deleted_at\n        FROM system_profiles\n        WHERE user_id = $1 AND deleted_at IS NULL\n        LIMIT 1\n        ",
+  "query": "\n        SELECT id, name, user_id, tenant_id, avatar_url, created_at, updated_at, deleted_at\n        FROM customer_profiles\n        WHERE user_id = $1 AND tenant_id = $2 AND deleted_at IS NULL\n        LIMIT 1\n        ",
   "describe": {
     "columns": [
       {
@@ -10,36 +10,49 @@
       },
       {
         "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
         "name": "user_id",
         "type_info": "Uuid"
       },
       {
-        "ordinal": 2,
+        "ordinal": 3,
+        "name": "tenant_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
         "name": "avatar_url",
         "type_info": "Text"
       },
       {
-        "ordinal": 3,
+        "ordinal": 5,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 4,
+        "ordinal": 6,
         "name": "updated_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 5,
+        "ordinal": 7,
         "name": "deleted_at",
         "type_info": "Timestamptz"
       }
     ],
     "parameters": {
       "Left": [
+        "Uuid",
         "Uuid"
       ]
     },
     "nullable": [
+      false,
+      false,
       false,
       false,
       true,
@@ -48,5 +61,5 @@
       true
     ]
   },
-  "hash": "9cee5feef9ad0ded91c7af823c8d3e9c3c1ade0b0d44d8e6eeffcb60f045e4b5"
+  "hash": "03e209597addc952581d5e41ac2b28949ef106cfe5b7fc6354a9933d1ae8697c"
 }

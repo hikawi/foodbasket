@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -8,6 +8,7 @@ use crate::models::StaffProfile;
 #[derive(Serialize, ToSchema)]
 pub struct StaffProfileDTO {
     pub id: Uuid,
+    pub name: String,
     pub user_id: Uuid,
     pub tenant_id: Uuid,
     pub pin_code: Option<String>,
@@ -16,15 +17,11 @@ pub struct StaffProfileDTO {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Deserialize, ToSchema)]
-pub struct CreateStaffRequest {
-    pub user_id: Uuid,
-}
-
 impl From<StaffProfile> for StaffProfileDTO {
     fn from(value: StaffProfile) -> Self {
         Self {
             id: value.id,
+            name: value.name,
             user_id: value.user_id,
             tenant_id: value.tenant_id,
             pin_code: value.pin_code,

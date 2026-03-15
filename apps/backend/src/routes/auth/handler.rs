@@ -188,7 +188,7 @@ pub async fn logout(
         (status = 401, description = "Unauthenticated", body = ErrorResponse),
         (status = 500, description = "Internal server error", body = ErrorResponse),
     ),
-    security(("session_id" = [])),
+    security(("session_id" = []), ("branch_id" = []), ("tenant_slug" = [])),
 )]
 pub async fn get_me(
     Extension(ctx): Extension<Arc<RequestContext>>,

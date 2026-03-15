@@ -54,6 +54,9 @@ async function createTenant() {
       case 409:
         error.value = "errorSlugTaken";
         break;
+      case 201:
+        window.location.href = `http://${tenantSlug.value}${import.meta.env.PUBLIC_DOMAIN}`;
+        break;
     }
   } catch {
     error.value = "errorInternet";

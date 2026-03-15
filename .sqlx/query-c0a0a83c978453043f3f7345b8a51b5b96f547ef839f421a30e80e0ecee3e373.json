@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, user_id, tenant_id, avatar_url, created_at, updated_at, deleted_at\n        FROM customer_profiles\n        WHERE user_id = $1 AND tenant_id = $2 AND deleted_at IS NULL\n        LIMIT 1\n        ",
+  "query": "\n    SELECT t.id, t.name, t.slug, t.created_at, t.updated_at, t.deleted_at\n    FROM tenants t\n    INNER JOIN staff_profiles sp ON sp.tenant_id = t.id\n    WHERE sp.user_id = $1 AND t.deleted_at IS NULL AND sp.deleted_at IS NULL\n    ORDER BY name\n    OFFSET $2\n    LIMIT $3\n    ",
   "describe": {
     "columns": [
       {
@@ -10,31 +10,26 @@
       },
       {
         "ordinal": 1,
-        "name": "user_id",
-        "type_info": "Uuid"
-      },
-      {
-        "ordinal": 2,
-        "name": "tenant_id",
-        "type_info": "Uuid"
-      },
-      {
-        "ordinal": 3,
-        "name": "avatar_url",
+        "name": "name",
         "type_info": "Text"
       },
       {
-        "ordinal": 4,
+        "ordinal": 2,
+        "name": "slug",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 5,
+        "ordinal": 4,
         "name": "updated_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 6,
+        "ordinal": 5,
         "name": "deleted_at",
         "type_info": "Timestamptz"
       }
@@ -42,18 +37,18 @@
     "parameters": {
       "Left": [
         "Uuid",
-        "Uuid"
+        "Int8",
+        "Int8"
       ]
     },
     "nullable": [
       false,
       false,
       false,
-      true,
       false,
       false,
       true
     ]
   },
-  "hash": "35d44b74eb1288a8e79a3e4c9c939785f8a744079f6d1cf28dd94ea0e771b2fa"
+  "hash": "c0a0a83c978453043f3f7345b8a51b5b96f547ef839f421a30e80e0ecee3e373"
 }

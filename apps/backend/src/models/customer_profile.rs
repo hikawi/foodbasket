@@ -5,6 +5,7 @@ use uuid::Uuid;
 #[allow(dead_code)]
 pub struct CustomerProfile {
     pub id: Uuid,
+    pub name: String,
     pub user_id: Uuid,
     pub tenant_id: Uuid,
     pub avatar_url: Option<String>,
