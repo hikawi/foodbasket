@@ -1,4 +1,5 @@
 use sqlx::PgPool;
+use uuid::Uuid;
 
 use crate::{
     models::User,
@@ -86,6 +87,19 @@ impl UserService {
     ) -> Result<User, UserServiceError> {
         let hashed = services::passwords::hash(password)?;
         Ok(repos::users::create_user(&self.pool, email, &hashed).await?)
+    }
+
+    /// Retrieves a user by ID.
+    ///
+    /// # Errors
+    ///
+    /// - `UserServiceError::UserNotFound` if the email could not be found, or deleted.
+    /// - `UserServiceError::UnknownError` if there was an unexpected error.
+    pub async fn get_user(&self, user_id: &Uuid) -> Result<User, UserServiceError> {
+        repos::users::find_by_id(&self.pool, user_id)
+            .await
+            .map_err(UserServiceError::from)?
+            .ok_or(UserServiceError::UserNotFound)
     }
 }
 

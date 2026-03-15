@@ -1,0 +1,25 @@
+@startuml
+
+title CORS Layer
+
+start
+
+* Checks Origin
+
+if (ends with .foodbasket.app or .foodbasket.localhost?) then (yes)
+
+* Allows
+
+:Marks X-Tenant-Slug, X-App-Context
+and X-Branch-ID as allowed headers;
+
+else (no)
+
+* Denies
+
+endif
+
+stop
+
+@enduml
+

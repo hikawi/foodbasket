@@ -9,11 +9,22 @@ async function tryFetchMe() {
   loading.value = true;
   error.value = "";
 
+  const parts = window.location.hostname.split(".");
+  const tenant = parts[0];
+
   try {
     const res = await fetch(`${import.meta.env.VITE_PUBLIC_API}/v1/auth/me`, {
       method: "GET",
       mode: "cors",
       credentials: "include",
+      headers: {
+        ...(tenant
+          ? {}
+          : {
+              "X-Tenant-Slug": tenant,
+            }),
+        "X-App-Context": "pos",
+      },
     });
 
     switch (res.status) {

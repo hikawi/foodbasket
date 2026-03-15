@@ -23,7 +23,7 @@ async function tryFetchMe() {
       credentials: "include",
       headers: {
         "X-Tenant-Slug": tenant,
-        "X-App-Context": "storefront",
+        "X-App-Context": "store",
       },
     });
 

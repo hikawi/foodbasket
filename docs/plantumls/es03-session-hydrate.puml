@@ -1,0 +1,32 @@
+@startuml
+
+title Session Hydration Layer
+
+start
+
+* Checks session_id cookie
+
+if (available?) then (yes)
+
+* Checks Session Service with the Session ID
+
+if (valid?) then (yes)
+
+* Injects SessionContext(Some(Arc(Session)))
+
+else (no)
+
+* Injects SessionContext(None)
+
+endif
+
+else (no)
+
+* Injects SessionContext(None)
+
+endif
+
+stop
+
+@enduml
+

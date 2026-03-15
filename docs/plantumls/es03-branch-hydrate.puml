@@ -1,0 +1,32 @@
+@startuml
+
+title Branch Hydration Layer
+
+start
+
+* Checks X-Branch-ID Header
+
+* Checks TenantContext
+
+if (valid branch uuid and valid tenant?) then (yes)
+
+* Checks if branch belongs to tenant
+
+if (belongs?) then (yes)
+
+* Injects BranchContext(Some(branch_id))
+
+endif
+
+* Injects BranchContext(None)
+
+else (no)
+
+* Injects BranchContext(None)
+
+endif
+
+stop
+
+@enduml
+

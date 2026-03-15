@@ -177,7 +177,7 @@ mod tests {
 
         let service = SessionService::new(client);
         let session = service.get("test").await;
-        assert!(matches!(session, Ok(_)));
+        assert!(session.is_ok());
         assert_eq!(
             session.unwrap().user_email.unwrap(),
             "testemail@foodbasket.app"
