@@ -36,7 +36,7 @@ const resolvedModules = computed<ModuleConfig[]>(() => {
     <router-link
       v-for="item in resolvedModules"
       :key="item.link"
-      :to="item.link"
+      :to="{ name: item.link }"
       class="px-2 py-1 rounded-full flex flex-col items-center transition-colors"
       :class="{
         'bg-grouped-background-secondary': selected === item.module,

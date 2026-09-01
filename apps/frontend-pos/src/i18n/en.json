@@ -8,6 +8,14 @@
     "errorNotTenant": "That tenant doesn't exist",
     "errorUnauthorized": "You are not logged in"
   },
+  "users": {
+    "drill": {
+      "users": "Users",
+      "groups": "Groups",
+      "roles": "Roles",
+      "invitations": "Invitations"
+    }
+  },
   "navigationBar": {
     "dashboard": "Dashboard",
     "orders": "Orders",

@@ -43,7 +43,7 @@ pub async fn get_staff(
     query: Result<Query<PaginationQuery>, QueryRejection>,
 ) -> Result<Json<PaginatedResponse<StaffProfileDTO>>, AppError> {
     if !ctx.has_permission(permissions::pos::staff::READ) {
-        return Err(StaffError::Unauthorized("Unauthorized".into()))?;
+        Err(StaffError::Unauthorized("Unauthorized".into()))?;
     }
 
     let tenant_id = match &ctx.origin {

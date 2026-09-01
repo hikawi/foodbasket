@@ -7,6 +7,7 @@ import {
   LucideUsers,
 } from "lucide-vue-next";
 import type { FunctionalComponent } from "vue";
+import { pages } from "./pages";
 
 export type Module = "dashboard" | "orders" | "tables" | "menus" | "users" | "more";
 
@@ -19,32 +20,32 @@ export interface ModuleConfig {
 
 export const DEFAULT_MODULES: Record<Module, Omit<ModuleConfig, "module">> = {
   dashboard: {
-    link: "/",
+    link: pages.dashboard,
     label: "navigationBar.dashboard",
     icon: LucideLayoutDashboard,
   },
   orders: {
-    link: "/orders",
+    link: pages.orders,
     label: "navigationBar.orders",
     icon: LucideScrollText,
   },
   tables: {
-    link: "/tables",
+    link: pages.tables,
     label: "navigationBar.tables",
     icon: LucideTable2,
   },
   menus: {
-    link: "/menus",
+    link: pages.menus,
     label: "navigationBar.menus",
     icon: LucideSquareMenu,
   },
   users: {
-    link: "/users",
+    link: pages.users,
     label: "navigationBar.users",
     icon: LucideUsers,
   },
   more: {
-    link: "/more",
+    link: pages.more,
     label: "navigationBar.more",
     icon: LucideEllipsis,
   },

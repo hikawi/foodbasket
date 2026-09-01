@@ -3,9 +3,11 @@ import { computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useProfileStore } from "./stores/profile";
 import { errorCode } from "./utils/error";
+import { useRoute } from "vue-router";
 
 const domain = import.meta.env.VITE_PUBLIC_DOMAIN;
 
+const route = useRoute();
 const { locale } = useI18n();
 const profileStore = useProfileStore();
 
@@ -28,10 +30,9 @@ onMounted(async () => {
     <p class="italic text-title-3">{{ $t("general.loading") }}</p>
   </div>
 
-  <!-- Full-Canvas Application View -->
   <div
-    class="flex flex-col w-full min-h-screen bg-background-primary text-label-primary gap-4 p-3"
     v-else-if="profileStore.profile?.tenantId !== undefined && profileStore.profile?.staffProfile"
+    class="flex flex-col w-full h-screen overflow-hidden bg-background-primary text-label-primary p-3 gap-4"
   >
     <router-view></router-view>
   </div>

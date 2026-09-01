@@ -8,6 +8,14 @@
     "errorNotTenant": "このスラッグは無効です",
     "errorUnauthorized": "ログインしていません"
   },
+  "users": {
+    "drill": {
+      "users": "ユーザー",
+      "groups": "グループ",
+      "roles": "ロール",
+      "invitations": "招待"
+    }
+  },
   "navigationBar": {
     "dashboard": "ダッシュボード",
     "orders": "オーダー",
