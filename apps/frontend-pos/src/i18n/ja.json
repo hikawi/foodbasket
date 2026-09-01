@@ -1,6 +1,7 @@
 {
   "general": {
     "loading": "ロード中",
+    "search": "探検",
     "backHome": "ホームページに戻る",
     "errorUnknownTenant": "このドメインは存在していません",
     "errorNoStaffProfile": "職員ではない",
@@ -14,6 +15,9 @@
       "groups": "グループ",
       "roles": "ロール",
       "invitations": "招待"
+    },
+    "users": {
+      "emptyList": "クリックしてユーザー作成したり招待したりする"
     }
   },
   "navigationBar": {
