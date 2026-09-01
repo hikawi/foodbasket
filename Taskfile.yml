@@ -104,22 +104,27 @@ tasks:
   build:backend:
     desc: Run docker build on backend
     cmds:
-      - docker build -t foodbasket-backend .
+      - docker build --target backend -t foodbasket-backend .
+
+  build:admin:
+    desc: Run docker build on frontend-admin
+    cmds:
+      - docker build --target frontend-admin -t foodbasket-frontend-admin .
 
   build:pos:
     desc: Run docker build on frontend-pos
     cmds:
-      - docker build -t foodbasket-frontend-pos .
+      - docker build --target frontend-pos -t foodbasket-frontend-pos .
 
   build:home:
     desc: Run docker build on frontend-home
     cmds:
-      - docker build -t foodbasket-frontend-home .
+      - docker build --target frontend-home -t foodbasket-frontend-home .
 
   build:tenant:
     desc: Run docker build on frontend-tenant
     cmds:
-      - docker build -t foodbasket-frontend-tenant .
+      - docker build --target frontend-tenant -t foodbasket-frontend-tenant .
 
   build:
     desc: Build Dockerfiles
