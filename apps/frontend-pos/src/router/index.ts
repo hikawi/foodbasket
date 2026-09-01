@@ -4,39 +4,62 @@ import MorePage from "@/pages/MorePage.vue";
 import OrdersPage from "@/pages/OrdersPage.vue";
 import TablesPage from "@/pages/TablesPage.vue";
 import UsersPage from "@/pages/UsersPage.vue";
-import { routes } from "@/utils/routes";
+import { pages } from "@/utils/pages";
 import { createRouter, createWebHistory } from "vue-router";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      name: routes.dashboard,
+      name: pages.dashboard,
       path: "/",
       component: DashboardPage,
     },
     {
-      name: routes.orders,
+      name: pages.orders,
       path: "/orders",
       component: OrdersPage,
     },
     {
-      name: routes.tables,
+      name: pages.tables,
       path: "/tables",
       component: TablesPage,
     },
     {
-      name: routes.menus,
+      name: pages.menus,
       path: "/menus",
       component: MenusPage,
     },
     {
-      name: routes.users,
+      name: pages.users,
       path: "/users",
       component: UsersPage,
+      redirect: { name: pages.usersMaster },
+      children: [
+        {
+          name: pages.usersMaster,
+          path: "/users/master",
+          component: () => import("../pages/users/UsersSubpage.vue"),
+        },
+        {
+          name: pages.groups,
+          path: "/users/groups",
+          component: () => import("../pages/users/GroupsSubpage.vue"),
+        },
+        {
+          name: pages.roles,
+          path: "/users/roles",
+          component: () => import("../pages/users/RolesSubpage.vue"),
+        },
+        {
+          name: pages.invitations,
+          path: "/users/invitations",
+          component: () => import("../pages/users/InvitationsSubpage.vue"),
+        },
+      ],
     },
     {
-      name: routes.more,
+      name: pages.more,
       path: "/more",
       component: MorePage,
     },
