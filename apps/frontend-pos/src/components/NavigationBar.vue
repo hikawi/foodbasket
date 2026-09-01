@@ -1,45 +1,51 @@
 <script setup lang="ts">
-import {
-  LucideEllipsis,
-  LucideLayoutDashboard,
-  LucideScrollText,
-  LucideSquareMenu,
-  LucideTable2,
-  LucideUsers,
-} from "lucide-vue-next";
-import type { FunctionalComponent } from "vue";
+import { DEFAULT_MODULES, type Module, type ModuleConfig } from "@/utils/modules";
+import { computed } from "vue";
 
-defineProps<{
-  enabledModules: {
-    module: string;
-    link: string;
-    label: string;
-  }[];
-  selected?: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    enabledModules?: (Module | (Partial<ModuleConfig> & { module: Module }))[];
+    selected?: Module;
+  }>(),
+  {
+    enabledModules: () => Object.keys(DEFAULT_MODULES) as Module[],
+  },
+);
 
-const icons: Record<string, FunctionalComponent> = {
-  dashboard: LucideLayoutDashboard,
-  orders: LucideScrollText,
-  tables: LucideTable2,
-  menus: LucideSquareMenu,
-  users: LucideUsers,
-  more: LucideEllipsis,
-};
+const resolvedModules = computed<ModuleConfig[]>(() => {
+  return props.enabledModules.map((item) => {
+    if (typeof item === "string") {
+      return {
+        module: item,
+        ...DEFAULT_MODULES[item],
+      };
+    }
+
+    return {
+      ...DEFAULT_MODULES[item.module],
+      ...item,
+    };
+  });
+});
 </script>
 
 <template>
-  <div class="p-1 rounded-full bg-grouped-background-primary grid grid-flow-col auto-cols-fr gap-1">
+  <div
+    class="p-1 rounded-full min-w-2xl bg-grouped-background-primary grid grid-flow-col auto-cols-fr gap-1"
+  >
     <router-link
-      v-for="module in enabledModules"
-      :key="module.link"
-      :to="module.link"
+      v-for="item in resolvedModules"
+      :key="item.link"
+      :to="item.link"
       class="px-2 py-1 rounded-full flex flex-col items-center transition-colors"
-      :class="{ 'bg-grouped-background-secondary': selected === module.module }"
+      :class="{
+        'bg-grouped-background-secondary': selected === item.module,
+        'hover:bg-grouped-background-secondary/50': selected !== item.module,
+      }"
     >
-      <component :is="icons[module.module]" class="text-label-primary size-6" />
+      <component :is="item.icon" class="text-label-primary size-6" />
       <span class="text-caption1-emphasized">
-        {{ module.label }}
+        {{ $t(item.label) }}
       </span>
     </router-link>
   </div>

@@ -1,6 +1,10 @@
 {
   "general": {
     "loading": "Loading",
+    "backHome": "Back to Home Page",
+    "errorUnknownTenant": "This domain doesn't exist",
+    "errorNoStaffProfile": "You don't have a staff profile",
+    "errorNoStaffProfileDesc": "You can't access this POS panel, as you are not a staff member. If you think this was a mistake, please contact your administrators or managers.",
     "errorNotTenant": "That tenant doesn't exist",
     "errorUnauthorized": "You are not logged in"
   },

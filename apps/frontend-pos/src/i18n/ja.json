@@ -1,6 +1,10 @@
 {
   "general": {
     "loading": "ロード中",
+    "backHome": "ホームページに戻る",
+    "errorUnknownTenant": "このドメインは存在していません",
+    "errorNoStaffProfile": "職員ではない",
+    "errorNoStaffProfileDesc": "職員ではない際にご利用できません。間違いがありましたら、管理者にご連絡ください",
     "errorNotTenant": "このスラッグは無効です",
     "errorUnauthorized": "ログインしていません"
   },

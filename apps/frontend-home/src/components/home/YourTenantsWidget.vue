@@ -54,7 +54,7 @@ onMounted(tryFetchTenants);
       <template v-for="tenant in tenants" :key="tenant.id">
         <a
           class="flex group flex-row w-full items-center justify-between cursor-pointer p-1 hover:bg-violent-violet-600/20 rounded-xl pr-4"
-          :href="`http://${tenant.slug}${domain}`"
+          :href="`http://${tenant.slug}.pos${domain}`"
         >
           <div class="w-full flex flex-row gap-2 items-center">
             <AvatarProfile :name="tenant.name" class="rounded-lg" :size="64" />
