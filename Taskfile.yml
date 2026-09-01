@@ -68,10 +68,6 @@ tasks:
       - cargo test --workspace
 
   # --- Development ---
-  dev:
-    desc: Start all services natively with hot-reload
-    deps: [infra, dev:backend, dev:frontends]
-
   dev:backend:
     desc: Start the Backend in hot reload mode
     dir: apps/backend
@@ -82,6 +78,11 @@ tasks:
     desc: Start all Vue apps in parallel
     cmds:
       - pnpm -r --parallel dev
+
+  dev:caddy:
+    desc: Start a caddy server
+    cmds:
+      - sudo caddy run --config Caddyfile
 
   # Database migrations
   migrate:diff:

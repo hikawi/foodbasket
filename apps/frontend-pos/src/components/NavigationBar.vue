@@ -7,8 +7,9 @@ import {
   LucideTable2,
   LucideUsers,
 } from "lucide-vue-next";
+import type { FunctionalComponent } from "vue";
 
-const props = defineProps<{
+defineProps<{
   enabledModules: {
     module: string;
     link: string;
@@ -17,7 +18,7 @@ const props = defineProps<{
   selected?: string;
 }>();
 
-const icons: Record<string, any> = {
+const icons: Record<string, FunctionalComponent> = {
   dashboard: LucideLayoutDashboard,
   orders: LucideScrollText,
   tables: LucideTable2,

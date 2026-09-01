@@ -133,3 +133,131 @@ impl RequestContext {
         specific_allow || wildcard_allow
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use chrono::Utc;
+    use sqlx::types::Json;
+
+    use crate::models::{PolicyDocument, PolicyStatement};
+
+    use super::*;
+
+    fn mock_request_context(policy_ctx: PolicyContext) -> RequestContext {
+        RequestContext::new(
+            TenantContext::Anonymous,
+            SessionContext(None),
+            ProfileContext::Anonymous,
+            BranchContext(None),
+            policy_ctx,
+        )
+    }
+
+    fn mock_policy(statements: Vec<PolicyStatement>) -> Policy {
+        Policy {
+            id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
+            branch_id: Some(Uuid::new_v4()),
+            name: "test".into(),
+            statements: Json(PolicyDocument {
+                version: "v1".into(),
+                statements,
+            }),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            deleted_at: None,
+        }
+    }
+
+    fn mock_statement(effect: PolicyEffect, actions: &[&str]) -> PolicyStatement {
+        PolicyStatement {
+            effect,
+            actions: actions.iter().map(|s| s.to_string()).collect(),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_explicit_allow() -> anyhow::Result<()> {
+        let policy1 = mock_policy(vec![
+            mock_statement(
+                PolicyEffect::Allow,
+                &["permissions:read", "permissions:write"],
+            ),
+            mock_statement(PolicyEffect::Deny, &["permissions:delete"]),
+        ]);
+
+        let policies = vec![policy1];
+        let policy_ctx = PolicyContext(Some(Arc::new(policies)));
+        let request_ctx = mock_request_context(policy_ctx);
+
+        assert!(request_ctx.has_permission("permissions:read"));
+        assert!(!request_ctx.has_permission("permissions:update"));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_prioritized_deny() -> anyhow::Result<()> {
+        let policy1 = mock_policy(vec![
+            mock_statement(
+                PolicyEffect::Allow,
+                &["permissions:read", "permissions:write"],
+            ),
+            mock_statement(PolicyEffect::Deny, &["permissions:read"]),
+        ]);
+
+        let policies = vec![policy1];
+        let policy_ctx = PolicyContext(Some(Arc::new(policies)));
+        let request_ctx = mock_request_context(policy_ctx);
+
+        assert!(request_ctx.has_permission("permissions:write"));
+        assert!(!request_ctx.has_permission("permissions:read"));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_wildcard_allow_specific_deny() -> anyhow::Result<()> {
+        let policy1 = mock_policy(vec![
+            mock_statement(
+                PolicyEffect::Deny,
+                &["permissions:read", "permissions:write"],
+            ),
+            mock_statement(PolicyEffect::Allow, &["permissions:*"]),
+        ]);
+
+        let policies = vec![policy1];
+        let policy_ctx = PolicyContext(Some(Arc::new(policies)));
+        let request_ctx = mock_request_context(policy_ctx);
+
+        assert!(request_ctx.has_permission("permissions:anything"));
+        assert!(request_ctx.has_permission("permissions:delete:what"));
+        assert!(!request_ctx.has_permission("permissions:read"));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_wildcard_deny_specific_allow() -> anyhow::Result<()> {
+        let policy1 = mock_policy(vec![
+            mock_statement(
+                PolicyEffect::Deny,
+                &["permissions:read", "permissions:write:*"],
+            ),
+            mock_statement(
+                PolicyEffect::Allow,
+                &["permissions:write", "permissions:write:123"],
+            ),
+        ]);
+
+        let policies = vec![policy1];
+        let policy_ctx = PolicyContext(Some(Arc::new(policies)));
+        let request_ctx = mock_request_context(policy_ctx);
+
+        assert!(request_ctx.has_permission("permissions:write"));
+        assert!(!request_ctx.has_permission("permissions:write:123"));
+        assert!(!request_ctx.has_permission("permissions:read"));
+
+        Ok(())
+    }
+}

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
+  "query": "SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL LIMIT 1",
   "describe": {
     "columns": [
       {
@@ -72,8 +72,7 @@
     ],
     "parameters": {
       "Left": [
-        "Text",
-        "Text"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -85,5 +84,5 @@
       true
     ]
   },
-  "hash": "3e320f021f38b70d25f6787678a69cab5446ae92e65af1e7f75bec6c8de39955"
+  "hash": "eb4f1b09c3ff92f06ab43a8be93caad412c7864ea9c899e4ca300eaa719c9000"
 }

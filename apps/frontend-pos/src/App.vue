@@ -1,46 +1,31 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import PlaceholderProfile from './components/demo/PlaceholderProfile.vue';
-import { useI18n } from 'vue-i18n';
-import NavigationBar from './components/NavigationBar.vue';
+import { onMounted } from "vue";
+import { useProfileStore } from "./stores/profile";
 
-const host = ref(window.location.host);
-const { t } = useI18n();
+const profileStore = useProfileStore();
+const loginUrl = `${import.meta.env.VITE_PUBLIC_DOMAIN}/en/login?callback=${encodeURIComponent(window.location.href)}`;
 
-const modules = computed(() => [{
-  module: "dashboard",
-  link: "/",
-  label: t("navigationBar.dashboard"),
-},
-{
-  module: "orders",
-  link: "/orders",
-  label: t("navigationBar.orders"),
-},
-{
-  module: "tables",
-  link: "/tables",
-  label: t("navigationBar.tables"),
-},
-{
-  module: "menus",
-  link: "/menus",
-  label: t("navigationBar.menus"),
-},
-{
-  module: "users",
-  link: "/users",
-  label: t("navigationBar.users"),
-},
-{
-  module: "more",
-  link: "/misc",
-  label: t("navigationBar.more"),
-}]);
+onMounted(async () => {
+  profileStore.fetchProfile();
+});
 </script>
 
 <template>
-  <h1 class="">You did it! You should be on {{ host }}</h1>
-  <PlaceholderProfile />
-  <NavigationBar :enabledModules="modules" />
-</template
+  <main
+    class="min-h-screen h-fit flex items-center justify-center text-label-primary bg-background-primary"
+  >
+    <div class="p-6 rounded-xl bg-white shadow-md max-w-xl w-full flex flex-col gap-4">
+      <p v-if="profileStore.loading" class="italic text-title-3">{{ $t("general.loading") }}</p>
+      <template v-else-if="profileStore.profile">
+        <template v-if="profileStore.profile.staffProfile"> </template>
+        <template v-else>
+          <p>Nice profile</p>
+        </template>
+      </template>
+      <p v-else class="text-title-2">
+        Oh no, you're not logged in.
+        <a :href="loginUrl" class="text-accent-primary font-semibold">Want to?</a>
+      </p>
+    </div>
+  </main>
+</template>
