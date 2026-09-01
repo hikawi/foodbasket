@@ -6,32 +6,68 @@
       {
         "ordinal": 0,
         "name": "id",
-        "type_info": "Uuid"
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "branches",
+            "name": "id"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "tenant_id",
-        "type_info": "Uuid"
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "branches",
+            "name": "tenant_id"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "name",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "branches",
+            "name": "name"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "branches",
+            "name": "created_at"
+          }
+        }
       },
       {
         "ordinal": 4,
         "name": "updated_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "branches",
+            "name": "updated_at"
+          }
+        }
       },
       {
         "ordinal": 5,
         "name": "deleted_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "branches",
+            "name": "deleted_at"
+          }
+        }
       }
     ],
     "parameters": {

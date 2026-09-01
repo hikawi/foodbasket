@@ -12,11 +12,17 @@ const tl = computed(() => getTranslations(props.lang));
 const loading = ref(true);
 const error = ref("");
 const data = ref<{
-  userId: string;
-  userEmail: string;
-  tenantId: string | null;
-  branchId: string | null;
-  profileContext: string;
+  user: {
+    id: string;
+    email: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+  tenantId?: string;
+  branchId?: string;
+  customerProfile?: {};
+  staffProfile?: {};
+  systemProfile?: {};
 } | null>(null);
 
 async function tryFetchMe() {
@@ -31,7 +37,8 @@ async function tryFetchMe() {
     });
 
     if (res.ok) {
-      data.value = await res.json();
+      const json = await res.json();
+      data.value = json;
     } else {
       error.value = "errorUnauthorized";
     }
@@ -54,18 +61,22 @@ onMounted(tryFetchMe);
   </div>
   <div
     v-else-if="error"
-    class="w-full max-w-xl text-center text-state-danger px-8 py-4 rounded-xl shadow-md bg-white italic"
+    class="w-full max-w-xl flex items-center flex-col gap-2 text-center text-state-danger px-8 py-4 rounded-xl shadow-md bg-white"
   >
     {{ tl.index[error as keyof typeof tl.index] }}
+
+    <a v-if="error == 'errorUnauthorized'" :href="`/${lang}/login`" class="underline text-black">
+      {{ tl.login.title }}
+    </a>
   </div>
   <div v-else class="flex flex-col gap-8 w-full max-w-xl items-center">
     <div class="flex flex-col items-center mb-8">
       <div class="flex flex-row items-center gap-2">
-        <AvatarProfile :name="data!.userEmail" />
-        <span class="text-title-3 text-white">{{ data?.userEmail }}</span>
+        <AvatarProfile :name="data!.user.email" />
+        <span class="text-title-3 text-white">{{ data?.user.email }}</span>
       </div>
 
-      <a href="./login" class="text-subheadline text-neptune-300 hover:underline">{{
+      <a :href="`/${lang}/login`" class="text-subheadline text-neptune-300 hover:underline">{{
         tl.index.notYou
       }}</a>
     </div>

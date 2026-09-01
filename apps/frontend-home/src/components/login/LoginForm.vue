@@ -85,7 +85,7 @@ async function login() {
         </div>
 
         <button
-          class="p-4 w-full rounded-xl shadow-md flex items-center justify-center gap-3 duration-200 hover:bg-violent-violet-50"
+          class="p-4 w-full rounded-xl shadow-md flex items-center cursor-pointer justify-center gap-3 duration-200 hover:bg-violent-violet-50"
           disabled
         >
           <!-- Google's SVG -->
@@ -144,7 +144,7 @@ async function login() {
       </span>
 
       <button
-        class="bg-violent-violet-600 rounded-xl p-4 text-white font-semibold duration-200 hover:bg-violent-violet-700"
+        class="bg-violent-violet-600 cursor-pointer rounded-xl p-4 text-white font-semibold duration-200 hover:bg-violent-violet-700"
         type="submit"
       >
         {{ tl.login.cta }}

@@ -1,10 +1,10 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import WelcomeScreen from "../../components/home/WelcomeScreen.vue";
-import { getTranslations } from "../../utils/i18n";
+import { getTranslations, type Language } from "../../utils/i18n";
 
-const locale = Astro.currentLocale || "en";
-const translations = await getTranslations(locale);
+const locale = (Astro.currentLocale || "en") as Language;
+const translations = getTranslations(locale);
 ---
 
 <BaseLayout title={translations.index.title} description={translations.index.description}>

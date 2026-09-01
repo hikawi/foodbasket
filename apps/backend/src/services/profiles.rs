@@ -27,7 +27,10 @@ impl ProfileService {
     pub fn new(pool: PgPool, _cache: CacheClient) -> Self {
         Self { pool }
     }
+}
 
+impl ProfileService {
+    /// Retrieves the customer profile for the user and the tenant provided.
     pub async fn get_customer_profile(
         &self,
         user_id: &Uuid,
@@ -39,6 +42,7 @@ impl ProfileService {
         }
     }
 
+    /// Retrieves the staff profile for the user and the tenant provided.
     pub async fn get_staff_profile(
         &self,
         user_id: &Uuid,
@@ -50,6 +54,7 @@ impl ProfileService {
         }
     }
 
+    /// Retrieves the system profile of the user.
     pub async fn get_system_profile(
         &self,
         user_id: &Uuid,
@@ -60,6 +65,7 @@ impl ProfileService {
         }
     }
 
+    /// Retrieves a list of staff in a tenant, optionally scoped by branch.
     pub async fn get_staff_by_tenant(
         &self,
         tenant_id: &Uuid,

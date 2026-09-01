@@ -39,7 +39,8 @@ async function register() {
     }
 
     if (res.ok) {
-      window.location.href = props.callback;
+      const end = /\/^/g;
+      window.location.href = props.callback.replaceAll(end, "");
     }
   } catch {
     error.value = "errorInternet";
@@ -82,7 +83,7 @@ async function register() {
         </div>
 
         <button
-          class="p-4 w-full rounded-xl shadow-md flex items-center justify-center gap-3 duration-200 hover:bg-violent-violet-50"
+          class="p-4 w-full rounded-xl cursor-pointer shadow-md flex items-center justify-center gap-3 duration-200 hover:bg-violent-violet-50"
           disabled
         >
           <!-- Google's SVG -->
@@ -137,11 +138,11 @@ async function register() {
         class="w-full bg-state-danger/5 p-4 rounded-xl text-state-danger font-semibold"
         v-if="error"
       >
-        {{ tl.register[error] }}
+        {{ tl.register[error as keyof typeof tl.register] }}
       </span>
 
       <button
-        class="bg-violent-violet-600 rounded-xl p-4 text-white font-semibold duration-200 hover:bg-violent-violet-700"
+        class="bg-violent-violet-600 cursor-pointer rounded-xl p-4 text-white font-semibold duration-200 hover:bg-violent-violet-700"
         type="submit"
       >
         {{ tl.register.cta }}
