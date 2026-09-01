@@ -36,6 +36,10 @@ RUN pnpm i --frozen-lockfile
 FROM node-deps AS frontend-pos-builder
 WORKDIR /app
 COPY ./apps/frontend-pos ./apps/frontend-pos
+ARG VITE_PUBLIC_API
+ARG VITE_PUBLIC_DOMAIN
+ENV VITE_PUBLIC_API=https://api.foodbasket.app
+ENV VITE_PUBLIC_DOMAIN=https://foodbasket.app
 RUN pnpm --filter @foodbasket/pos build
 
 FROM caddy:2.11-alpine AS frontend-pos
@@ -49,6 +53,10 @@ EXPOSE 80
 FROM node-deps AS frontend-admin-builder
 WORKDIR /app
 COPY ./apps/frontend-admin ./apps/frontend-admin
+ARG VITE_PUBLIC_API
+ARG VITE_PUBLIC_DOMAIN
+ENV VITE_PUBLIC_API=https://api.foodbasket.app
+ENV VITE_PUBLIC_DOMAIN=https://foodbasket.app
 RUN pnpm --filter @foodbasket/admin build
 
 FROM caddy:2.11-alpine AS frontend-admin
