@@ -62,6 +62,10 @@ EXPOSE 80
 FROM node-deps AS frontend-home-builder
 WORKDIR /app
 COPY ./apps/frontend-home ./apps/frontend-home
+ARG PUBLIC_API
+ARG PUBLIC_DOMAIN
+ENV PUBLIC_API=https://api.foodbasket.app
+ENV PUBLIC_DOMAIN=.foodbasket.app
 RUN pnpm --filter foodbasket build
 
 FROM node-base AS frontend-home-deps
@@ -85,6 +89,10 @@ CMD ["node", "apps/frontend-home/dist/server/entry.mjs"]
 FROM node-deps AS frontend-tenant-builder
 WORKDIR /app
 COPY ./apps/frontend-tenant ./apps/frontend-tenant
+ARG PUBLIC_API
+ARG PUBLIC_DOMAIN
+ENV PUBLIC_API=https://api.foodbasket.app
+ENV PUBLIC_DOMAIN=.foodbasket.app
 RUN pnpm --filter @foodbasket/tenant build
 
 FROM node-base AS frontend-tenant-deps
