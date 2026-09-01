@@ -108,7 +108,7 @@ COPY --from=frontend-tenant-deps /app/node_modules ./node_modules
 COPY --from=frontend-tenant-deps /app/apps/frontend-tenant/node_modules ./apps/frontend-tenant/node_modules
 COPY --from=frontend-tenant-builder /app/apps/frontend-tenant/dist ./apps/frontend-tenant/dist
 COPY --from=frontend-tenant-builder /app/apps/frontend-tenant/package.json ./apps/frontend-tenant/
-EXPOSE 3000
+EXPOSE 3001
 CMD ["node", "apps/frontend-tenant/dist/server/entry.mjs"]
 
 # --------------------

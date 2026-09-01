@@ -1,7 +1,5 @@
 # Astro Starter Kit: Minimal
 
-Dummy change to trigger rebuilds.
-
 ```sh
 pnpm create astro@latest -- --template minimal
 ```
