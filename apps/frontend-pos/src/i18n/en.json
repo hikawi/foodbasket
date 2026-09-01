@@ -1,6 +1,7 @@
 {
   "general": {
     "loading": "Loading",
+    "search": "Search",
     "backHome": "Back to Home Page",
     "errorUnknownTenant": "This domain doesn't exist",
     "errorNoStaffProfile": "You don't have a staff profile",
@@ -14,6 +15,9 @@
       "groups": "Groups",
       "roles": "Roles",
       "invitations": "Invitations"
+    },
+    "users": {
+      "emptyList": "Click here to make or invite a user"
     }
   },
   "navigationBar": {

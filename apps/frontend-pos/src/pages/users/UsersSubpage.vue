@@ -2,23 +2,14 @@
 import { ref, onMounted } from "vue";
 import { LucidePanelRightClose, LucidePanelRightOpen } from "lucide-vue-next";
 import scopedFetch from "@/utils/fetcher";
+import StaffMasterList from "@/components/users/StaffMasterList.vue";
+import type { StaffMember } from "@/utils/types";
 
-defineOptions({
-  name: "UsersSubpage",
-});
-
-interface StaffMember {
-  id: string;
-  name: string;
-  avatarUrl: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Collapsible Properties Pane State
+// Selection & Sidebar State
+const selectedStaff = ref<StaffMember | null>(null);
 const isPropertiesOpen = ref(true);
 
-// Data & Loading States
+// API Fetch State
 const staffList = ref<StaffMember[]>([]);
 const isLoading = ref(true);
 const fetchError = ref<string | null>(null);
@@ -37,14 +28,18 @@ const fetchStaff = async () => {
       throw new Error(`Failed to fetch staff list (Status: ${response.status})`);
     }
 
-    const data = await response.json();
-    staffList.value = data;
+    const payload = await response.json();
+    staffList.value = payload.data ?? [];
   } catch (err: any) {
     fetchError.value = err.message ?? "An error occurred while fetching staff data";
   } finally {
     isLoading.value = false;
   }
 };
+
+function handleSelect(item: StaffMember) {
+  selectedStaff.value = item;
+}
 
 onMounted(() => {
   fetchStaff();
@@ -53,61 +48,71 @@ onMounted(() => {
 
 <template>
   <div class="flex w-full h-full overflow-hidden gap-4 flex-row">
-    <section class="w-90 h-full flex flex-col shrink-0 overflow-y-auto p-4 gap-4">
-      <div class="flex items-center justify-between">
-        <h2 class="text-headline font-bold">Staff Master</h2>
-        <button
-          type="button"
-          @click="fetchStaff"
-          class="px-2 py-1 text-caption1 bg-grouped-background-primary rounded hover:bg-grouped-background-secondary transition-colors"
-        >
-          Refresh
-        </button>
-      </div>
-
-      <!-- Loading / Error States -->
-      <div v-if="isLoading" class="text-caption1 text-label-secondary">Loading staff list...</div>
-
-      <div v-else-if="fetchError" class="text-caption1 text-state-danger">
-        {{ fetchError }}
-      </div>
-
-      <!-- JSON Raw Output for Master Pane -->
-      <pre
-        v-else
-        class="text-caption2 bg-grouped-background-primary p-2 rounded overflow-x-auto whitespace-pre-wrap font-mono"
-        >{{ staffList }}</pre
-      >
+    <section class="w-90 h-full flex flex-col shrink-0 overflow-y-auto gap-4">
+      <StaffMasterList :items="staffList" @select="handleSelect" />
     </section>
 
-    <main class="flex-1 h-full flex flex-col min-w-0 overflow-y-auto p-4 gap-4">
-      <div class="flex items-center justify-between">
-        <h1 class="text-title-2 font-bold">Detail View</h1>
+    <main
+      class="flex-1 h-full flex flex-col min-w-0 overflow-y-auto gap-4 bg-background-primary rounded-xl"
+    >
+      <div class="flex items-center justify-between border-b pb-3">
+        <div>
+          <h1 class="text-title2 font-semibold">
+            {{ selectedStaff?.name ?? "No Selection" }}
+          </h1>
+          <p class="text-caption1 text-label-secondary font-mono">
+            ID: {{ selectedStaff?.id ?? "N/A" }}
+          </p>
+        </div>
 
-        <!-- Toggle Button for Properties Pane -->
         <button
           type="button"
           @click="isPropertiesOpen = !isPropertiesOpen"
-          class="flex items-center gap-2 px-3 py-1.5 rounded bg-grouped-background-primary hover:bg-grouped-background-secondary transition-colors text-caption1"
+          class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-grouped-background-primary hover:bg-grouped-background-secondary transition-colors text-caption1"
         >
           <component
             :is="isPropertiesOpen ? LucidePanelRightClose : LucidePanelRightOpen"
             class="size-4"
           />
-          <span>{{ isPropertiesOpen ? "Hide Properties" : "Show Properties" }}</span>
+          <span>{{ isPropertiesOpen ? "Hide Details" : "Show Details" }}</span>
         </button>
       </div>
 
-      <div class="p-4 bg-grouped-background-primary rounded">
-        Select a staff member from the master list to inspect details.
+      <!-- Detail Barebones Raw JSON -->
+      <div class="flex-1 min-h-0 overflow-y-auto">
+        <h3 class="text-caption1 text-label-secondary uppercase tracking-wider mb-2">
+          Raw Selected Payload
+        </h3>
+        <pre
+          class="text-caption2 bg-grouped-background-primary p-3 rounded-lg overflow-x-auto whitespace-pre-wrap font-mono"
+          >{{ selectedStaff ?? "Select a staff member from the left list." }}</pre
+        >
       </div>
     </main>
 
-    <aside v-if="isPropertiesOpen" class="w-90 h-full flex flex-col shrink-0 overflow-y-auto p-4">
-      <h3 class="text-title-3 font-semibold mb-2">Properties</h3>
-      <p class="text-caption1 text-label-secondary">
-        Collapsible sidebar metadata and options panel.
-      </p>
+    <!-- 3. Properties Pane (Collapsible Fixed 360px) -->
+    <aside
+      v-if="isPropertiesOpen"
+      class="w-90 h-full flex flex-col shrink-0 overflow-y-auto bg-background-primary rounded-xl gap-3"
+    >
+      <h3 class="text-title3 font-semibold border-b pb-2">Staff Meta Properties</h3>
+
+      <div v-if="selectedStaff" class="flex flex-col gap-2 text-caption1">
+        <div>
+          <span class="text-label-secondary block">Tenant ID:</span>
+          <span class="font-mono text-caption2">{{ selectedStaff.tenant_id }}</span>
+        </div>
+        <div>
+          <span class="text-label-secondary block">User ID:</span>
+          <span class="font-mono text-caption2">{{ selectedStaff.user_id }}</span>
+        </div>
+        <div>
+          <span class="text-label-secondary block">Created At:</span>
+          <span>{{ selectedStaff.created_at }}</span>
+        </div>
+      </div>
+
+      <div v-else class="text-caption1 text-label-secondary">No active item selected.</div>
     </aside>
   </div>
 </template>
