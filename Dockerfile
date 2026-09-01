@@ -3,8 +3,7 @@
 # Intermediate targets:
 # - node-base: pnpm-enabled version of node 24
 # - node-deps: installed deps of node
-# - rust-base: rust 1.93
-# - node-builder: built version of @foodbasket/ui and @foodbasket/types
+# - rust-base: rust 1.98
 # Final targets:
 # - frontend-pos (SPA)
 # - frontend-admin (SPA)
@@ -26,8 +25,6 @@ FROM rust:1-slim AS rust-base
 FROM node-base AS node-deps
 WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-COPY packages/ui/package.json ./packages/ui/
-COPY packages/types/package.json ./packages/types/
 COPY apps/frontend-pos/package.json ./apps/frontend-pos/
 COPY apps/frontend-admin/package.json ./apps/frontend-admin/
 COPY apps/frontend-home/package.json ./apps/frontend-home/
@@ -36,14 +33,7 @@ RUN pnpm i --frozen-lockfile
 
 # --------------------
 
-FROM node-deps AS node-builder
-WORKDIR /app
-COPY ./packages ./packages
-RUN pnpm --filter @foodbasket/ui build
-
-# --------------------
-
-FROM node-builder AS frontend-pos-builder
+FROM node-deps AS frontend-pos-builder
 WORKDIR /app
 COPY ./apps/frontend-pos ./apps/frontend-pos
 RUN pnpm --filter @foodbasket/pos build
@@ -56,7 +46,7 @@ EXPOSE 80
 
 # --------------------
 
-FROM node-builder AS frontend-admin-builder
+FROM node-deps AS frontend-admin-builder
 WORKDIR /app
 COPY ./apps/frontend-admin ./apps/frontend-admin
 RUN pnpm --filter @foodbasket/admin build
@@ -69,7 +59,7 @@ EXPOSE 80
 
 # --------------------
 
-FROM node-builder AS frontend-home-builder
+FROM node-deps AS frontend-home-builder
 WORKDIR /app
 COPY ./apps/frontend-home ./apps/frontend-home
 RUN pnpm --filter foodbasket build
@@ -77,8 +67,6 @@ RUN pnpm --filter foodbasket build
 FROM node-base AS frontend-home-deps
 WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-COPY packages/ui/package.json ./packages/ui/
-COPY packages/types/package.json ./packages/types/
 COPY apps/frontend-home/package.json ./apps/frontend-home/
 RUN pnpm i --prod --frozen-lockfile
 
@@ -87,16 +75,14 @@ WORKDIR /app
 ENV NODE_ENV=production HOST=0.0.0.0
 COPY --from=frontend-home-deps /app/node_modules ./node_modules
 COPY --from=frontend-home-deps /app/apps/frontend-home/node_modules ./apps/frontend-home/node_modules
-COPY --from=frontend-home-builder /app/packages ./packages
 COPY --from=frontend-home-builder /app/apps/frontend-home/dist ./apps/frontend-home/dist
 COPY --from=frontend-home-builder /app/apps/frontend-home/package.json ./apps/frontend-home/
 EXPOSE 3000
-
 CMD ["node", "apps/frontend-home/dist/server/entry.mjs"]
 
 # --------------------
 
-FROM node-builder AS frontend-tenant-builder
+FROM node-deps AS frontend-tenant-builder
 WORKDIR /app
 COPY ./apps/frontend-tenant ./apps/frontend-tenant
 RUN pnpm --filter @foodbasket/tenant build
@@ -104,8 +90,6 @@ RUN pnpm --filter @foodbasket/tenant build
 FROM node-base AS frontend-tenant-deps
 WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-COPY packages/ui/package.json ./packages/ui/
-COPY packages/types/package.json ./packages/types/
 COPY apps/frontend-tenant/package.json ./apps/frontend-tenant/
 RUN pnpm i --prod --frozen-lockfile
 
@@ -114,11 +98,9 @@ WORKDIR /app
 ENV NODE_ENV=production HOST=0.0.0.0
 COPY --from=frontend-tenant-deps /app/node_modules ./node_modules
 COPY --from=frontend-tenant-deps /app/apps/frontend-tenant/node_modules ./apps/frontend-tenant/node_modules
-COPY --from=frontend-tenant-builder /app/packages ./packages
 COPY --from=frontend-tenant-builder /app/apps/frontend-tenant/dist ./apps/frontend-tenant/dist
 COPY --from=frontend-tenant-builder /app/apps/frontend-tenant/package.json ./apps/frontend-tenant/
 EXPOSE 3000
-
 CMD ["node", "apps/frontend-tenant/dist/server/entry.mjs"]
 
 # --------------------
