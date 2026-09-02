@@ -1540,6 +1540,7 @@ dependencies = [
  "chrono",
  "dotenvy",
  "fred",
+ "futures-util",
  "http 1.5.0",
  "mockall",
  "password-hash",
@@ -1551,6 +1552,7 @@ dependencies = [
  "testcontainers",
  "thiserror",
  "tokio",
+ "tokio-stream",
  "tower",
  "tower-cookies",
  "tower-http",
@@ -4134,6 +4136,7 @@ dependencies = [
  "futures-core",
  "pin-project-lite",
  "tokio",
+ "tokio-util",
 ]
 
 [[package]]

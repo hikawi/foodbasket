@@ -7,6 +7,8 @@ pub mod auth;
 pub mod extract;
 pub mod health;
 pub mod middlewares;
+pub mod policies;
+pub mod sse;
 pub mod staff;
 pub mod tenants;
 
@@ -16,6 +18,7 @@ pub fn main_routes(state: AppState) -> Router<AppState> {
         .nest("/health", health::routes())
         .nest("/tenants", tenants::routes())
         .nest("/staff", staff::routes())
+        .nest("/sse", sse::routes())
         .layer(middleware::from_fn_with_state(
             state.clone(),
             middlewares::context_solidify,

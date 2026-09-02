@@ -25,6 +25,8 @@ use utoipa::{
         crate::routes::auth::handler::get_me,
         crate::routes::tenants::handler::get_tenants,
         crate::routes::tenants::handler::create_tenant,
+        crate::routes::sse::handler::sse_handler,
+        crate::routes::sse::handler::sse_ping,
         crate::routes::staff::handler::get_staff,
     ),
     modifiers(&SecurityAddon),

@@ -1,5 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
@@ -19,7 +20,7 @@ pub enum TenantContext {
 }
 
 /// Represents the type of application we're querying for.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq)]
 pub enum AppContext {
     /// The sale frontpage for our tenants.
     Storefront,
@@ -54,6 +55,7 @@ pub struct PolicyContext(pub Option<Arc<Vec<Policy>>>);
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct RequestContext {
+    pub app: AppContext,
     pub origin: TenantContext,
     pub session: SessionContext,
     pub profile: ProfileContext,
@@ -65,6 +67,7 @@ pub struct RequestContext {
 
 impl RequestContext {
     pub fn new(
+        app: AppContext,
         origin: TenantContext,
         session: SessionContext,
         profile: ProfileContext,
@@ -92,6 +95,7 @@ impl RequestContext {
         }
 
         Self {
+            app,
             origin,
             session,
             profile,
@@ -145,6 +149,7 @@ mod tests {
 
     fn mock_request_context(policy_ctx: PolicyContext) -> RequestContext {
         RequestContext::new(
+            AppContext::None,
             TenantContext::Anonymous,
             SessionContext(None),
             ProfileContext::Anonymous,

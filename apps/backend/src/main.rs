@@ -1,26 +1,63 @@
 use std::{sync::Arc, time::Duration};
 
 use axum::Router;
-use fred::prelude::{ClientLike, TcpConfig};
+use fred::{
+    clients::SubscriberClient,
+    interfaces::{EventInterface, PubsubInterface},
+    prelude::{ClientLike, TcpConfig},
+    types::Builder,
+};
 use http::{Method, header};
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, sync::broadcast};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tracing_subscriber::EnvFilter;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::services::{PolicyService, ProfileService, SessionService, TenantService, UserService};
+use crate::{
+    event::ScopedEvent,
+    services::{PolicyService, ProfileService, SessionService, TenantService, UserService},
+};
 
 mod api;
 mod app;
 mod cache_keys;
 mod docs;
 mod error;
+mod event;
 mod models;
 mod permissions;
 mod repos;
 mod routes;
 mod services;
+
+pub async fn start_valkey_listener(
+    subscriber: SubscriberClient,
+    tx: broadcast::Sender<ScopedEvent>,
+) {
+    tokio::spawn(async move {
+        if let Err(e) = subscriber.init().await {
+            tracing::error!("Failed to initialize Valkey pubsub: {:?}", e);
+            return;
+        }
+
+        if let Err(e) = subscriber.psubscribe("foodbasket:tenants:*:sse").await {
+            tracing::error!("Failed to subscribe to tenants: {:?}", e);
+            return;
+        }
+
+        tracing::info!("starting valkey listener loop");
+        let mut message_stream = subscriber.message_rx();
+        while let Ok(message) = message_stream.recv().await {
+            if let Ok(payload_str) = message.value.convert::<String>() {
+                tracing::debug!(type = "event", event = %payload_str);
+                if let Ok(event) = serde_json::from_str::<ScopedEvent>(&payload_str) {
+                    let _ = tx.send(event);
+                }
+            }
+        }
+    });
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -29,16 +66,15 @@ async fn main() -> anyhow::Result<()> {
 
     // Logging
     tracing_subscriber::fmt()
-        .event_format(tracing_subscriber::fmt::format::json()) // The magic line
+        .json()
         .with_env_filter(EnvFilter::from_default_env())
-        .with_max_level(tracing::Level::INFO)
         .init();
 
     // Setup app state.
     let cfg = app::AppConfig::load()?;
     let pool = sqlx::PgPool::connect(&cfg.db_url).await?;
     let cache_config = fred::prelude::Config::from_url(&cfg.cache_url)?;
-    let cache_client = fred::prelude::Builder::from_config(cache_config)
+    let cache_client = fred::prelude::Builder::from_config(cache_config.clone())
         .with_connection_config(|config| {
             config.connection_timeout = Duration::from_secs(5);
             config.tcp = TcpConfig {
@@ -59,9 +95,13 @@ async fn main() -> anyhow::Result<()> {
     let profile_service = ProfileService::new(pool.clone(), cache_client.clone());
     let policy_service = PolicyService::new(pool.clone(), cache_client.clone());
 
+    // SSE holders
+    let (sse_sender, _) = broadcast::channel::<ScopedEvent>(100);
+
     let state = app::AppState {
         config: Arc::new(cfg),
         db: pool,
+        broadcast_sender: sse_sender.clone(),
         cache: cache_client,
         services: app::AppServices {
             tenants: Arc::new(tenant_service),
@@ -104,6 +144,12 @@ async fn main() -> anyhow::Result<()> {
         .merge(SwaggerUi::new("/swagger").url("/api-docs/openapi.json", docs::ApiDocs::openapi()))
         .layer(cors)
         .with_state(state);
+
+    // Spawn background stuff for valkey thing.
+    let subscriber_client = Builder::from_config(cache_config)
+        .build_subscriber_client()
+        .expect("Failed to build Valkey subscriber client");
+    start_valkey_listener(subscriber_client, sse_sender).await;
 
     tracing::info!("server started on port 8080");
     axum::serve(TcpListener::bind("0.0.0.0:8080").await?, app).await?;

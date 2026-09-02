@@ -3,8 +3,12 @@ use std::sync::Arc;
 use axum::extract::FromRef;
 use fred::prelude::Client as CacheClient;
 use sqlx::PgPool;
+use tokio::sync::broadcast;
 
-use crate::services::{PolicyService, ProfileService, SessionService, TenantService, UserService};
+use crate::{
+    event::ScopedEvent,
+    services::{PolicyService, ProfileService, SessionService, TenantService, UserService},
+};
 
 pub struct AppConfig {
     pub db_url: String,
@@ -26,6 +30,7 @@ pub struct AppServices {
 pub struct AppState {
     pub config: Arc<AppConfig>,
     pub db: PgPool,
+    pub broadcast_sender: broadcast::Sender<ScopedEvent>,
     pub cache: CacheClient,
     pub services: AppServices,
 }

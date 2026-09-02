@@ -3,6 +3,11 @@ pub fn session(id: &str) -> String {
     format!("foodbasket:sess:{id}")
 }
 
+/// A key in Redis that maps a tenant's uuid -> tenant's sse channel.
+pub fn tenant_sse(uuid: &str) -> String {
+    format!("foodbasket:tenants:{}:sse", uuid.to_string())
+}
+
 /// A key in Redis that maps a tenant's slug -> tenant's uuid / NF.
 pub fn tenant_slug(slug: &str) -> String {
     format!("foodbasket:tenants:slug:{slug}")

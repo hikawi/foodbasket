@@ -3,7 +3,8 @@ use axum::response::IntoResponse;
 use crate::{
     api::responses::ErrorResponse,
     routes::{
-        auth::AuthError, middlewares::MiddlewareError, staff::StaffError, tenants::TenantError,
+        auth::AuthError, middlewares::MiddlewareError, sse::SseError, staff::StaffError,
+        tenants::TenantError,
     },
 };
 
@@ -19,6 +20,9 @@ pub enum AppError {
     Staff(#[from] StaffError),
 
     #[error(transparent)]
+    Sse(#[from] SseError),
+
+    #[error(transparent)]
     Middleware(#[from] MiddlewareError),
 }
 
@@ -29,6 +33,7 @@ impl IntoResponse for AppError {
             Self::Staff(e) => e.extract(),
             Self::Tenant(e) => e.extract(),
             Self::Middleware(e) => e.extract(),
+            Self::Sse(e) => e.extract(),
         };
 
         tracing::error!(code = %code, status = %status.as_u16(), message);

@@ -297,6 +297,7 @@ pub async fn policy_hydrate(
 
 /// Just a final layer that compacts everything into one object for handlers to handle easily.
 pub async fn context_solidify(
+    Extension(app_ctx): Extension<AppContext>,
     Extension(origin_ctx): Extension<TenantContext>,
     Extension(session_ctx): Extension<SessionContext>,
     Extension(profile_ctx): Extension<ProfileContext>,
@@ -305,8 +306,14 @@ pub async fn context_solidify(
     mut req: Request,
     next: Next,
 ) -> Result<Response, AppError> {
-    let request_ctx =
-        RequestContext::new(origin_ctx, session_ctx, profile_ctx, branch_ctx, policy_ctx);
+    let request_ctx = RequestContext::new(
+        app_ctx,
+        origin_ctx,
+        session_ctx,
+        profile_ctx,
+        branch_ctx,
+        policy_ctx,
+    );
 
     req.extensions_mut().insert(Arc::new(request_ctx));
     Ok(next.run(req).await)

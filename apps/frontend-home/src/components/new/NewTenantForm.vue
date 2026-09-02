@@ -55,7 +55,7 @@ async function createTenant() {
         error.value = "errorSlugTaken";
         break;
       case 201:
-        window.location.href = `http://${tenantSlug.value}${import.meta.env.PUBLIC_DOMAIN}`;
+        window.location.href = `http://${tenantSlug.value}.pos${import.meta.env.PUBLIC_DOMAIN}`;
         break;
     }
   } catch {
