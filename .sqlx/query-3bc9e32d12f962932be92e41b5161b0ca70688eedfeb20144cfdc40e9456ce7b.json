@@ -101,6 +101,17 @@
             "name": "name"
           }
         }
+      },
+      {
+        "ordinal": 9,
+        "name": "superadmin",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "staff_profiles",
+            "name": "superadmin"
+          }
+        }
       }
     ],
     "parameters": {
@@ -119,6 +130,7 @@
       false,
       false,
       true,
+      false,
       false
     ]
   },

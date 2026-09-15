@@ -8,6 +8,7 @@ pub struct SystemProfile {
     pub name: String,
     pub user_id: Uuid,
     pub avatar_url: Option<String>,
+    pub superadmin: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,

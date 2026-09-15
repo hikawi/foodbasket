@@ -155,6 +155,55 @@ pub async fn get_branch_customer_policies(
     .await
 }
 
+/// Counts policies bound to a tenant.
+///
+/// Parameters:
+/// - `tenant_id`: The tenant ID.
+/// - `branch_id`: Specified branch ID to scope policies, otherwise get everything.
+pub async fn count_tenant_policies(
+    executor: impl PgExecutor<'_>,
+    tenant_id: &Uuid,
+    branch_id: Option<&Uuid>,
+) -> Result<Option<i64>, sqlx::Error> {
+    sqlx::query_scalar!(
+        r#"
+        SELECT count(p.*)
+        FROM policies p
+        WHERE tenant_id = $1 AND (branch_id = $2 OR branch_id IS NULL)
+        "#,
+        tenant_id,
+        branch_id,
+    )
+    .fetch_one(executor)
+    .await
+}
+
+/// Retrieves policies bound to a tenant.
+pub async fn get_tenant_policies(
+    executor: impl PgExecutor<'_>,
+    tenant_id: &Uuid,
+    branch_id: Option<&Uuid>,
+    offset: i64,
+    limit: i64,
+) -> Result<Vec<Policy>, sqlx::Error> {
+    sqlx::query_as!(
+        Policy,
+        r#"
+        SELECT id, tenant_id, branch_id, name, statements AS "statements: Json<PolicyDocument>", created_at, updated_at, deleted_at
+        FROM policies
+        WHERE tenant_id = $1 AND (branch_id = $2 OR branch_id IS NULL)
+        OFFSET $3
+        LIMIT $4
+        "#,
+        tenant_id,
+        branch_id,
+        offset,
+        limit,
+    )
+    .fetch_all(executor)
+    .await
+}
+
 pub async fn insert_policy(
     executor: impl PgExecutor<'_>,
     tenant_id: Option<&Uuid>,

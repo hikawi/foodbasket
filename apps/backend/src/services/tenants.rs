@@ -3,6 +3,7 @@ use fred::{
     types::Expiration,
 };
 use sqlx::PgPool;
+use tokio::try_join;
 use uuid::Uuid;
 
 use crate::{
@@ -206,15 +207,14 @@ impl TenantService {
         limit: i64,
     ) -> Result<(Vec<Tenant>, i64), TenantServiceError> {
         let offset = limit * (page - 1);
-        let tenants = repos::tenants::get_staff_tenants(&self.pool, user_id, offset, limit)
-            .await
-            .map_err(TenantServiceError::from)?;
-        let count = repos::tenants::count_staff_tenants(&self.pool, user_id)
-            .await
-            .map_err(TenantServiceError::from)?
-            .unwrap_or(0);
 
-        Ok((tenants, count))
+        let tenants_fut = repos::tenants::get_staff_tenants(&self.pool, user_id, offset, limit);
+        let count_fut = repos::tenants::count_staff_tenants(&self.pool, user_id);
+
+        let (tenants, count) =
+            try_join!(tenants_fut, count_fut).map_err(TenantServiceError::from)?;
+
+        Ok((tenants, count.unwrap_or(0)))
     }
 
     /// Creates a new tenant with the name or slug and adds the user in as the only staff.
@@ -369,6 +369,9 @@ mod tests {
             id: Uuid::new_v4(),
             name: "test".into(),
             slug: "test".into(),
+            description: None,
+            avatar_url: None,
+            banner_url: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
             deleted_at: None,
@@ -396,6 +399,9 @@ mod tests {
             id: Uuid::new_v4(),
             name: "test".into(),
             slug: "test".into(),
+            description: None,
+            avatar_url: None,
+            banner_url: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
             deleted_at: None,
@@ -426,6 +432,9 @@ mod tests {
             id: Uuid::new_v4(),
             name: "test".into(),
             slug: "test".into(),
+            description: None,
+            avatar_url: None,
+            banner_url: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
             deleted_at: None,

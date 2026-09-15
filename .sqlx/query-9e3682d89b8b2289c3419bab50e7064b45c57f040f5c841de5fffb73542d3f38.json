@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO tenants (name, slug) VALUES ($1, $2)\n        RETURNING id, name, slug, created_at, updated_at, deleted_at\n        ",
+  "query": "\n        INSERT INTO tenants (name, slug) VALUES ($1, $2)\n        RETURNING id, name, slug, avatar_url, banner_url, description, created_at, updated_at, deleted_at\n        ",
   "describe": {
     "columns": [
       {
@@ -38,6 +38,39 @@
       },
       {
         "ordinal": 3,
+        "name": "avatar_url",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "avatar_url"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "banner_url",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "banner_url"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "description",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tenants",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -48,7 +81,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 7,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -59,7 +92,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 8,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -80,10 +113,13 @@
       false,
       false,
       false,
+      true,
+      true,
+      true,
       false,
       false,
       true
     ]
   },
-  "hash": "c52966e5de3f5d01aa9162fb62cfdcb3c82d55a6d90091f98d85ea79d12355c4"
+  "hash": "9e3682d89b8b2289c3419bab50e7064b45c57f040f5c841de5fffb73542d3f38"
 }

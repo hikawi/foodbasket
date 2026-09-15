@@ -5,6 +5,9 @@ CREATE TABLE tenants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     slug TEXT NOT NULL,
+    description TEXT,
+    avatar_url TEXT,
+    banner_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     deleted_at TIMESTAMPTZ DEFAULT NULL
@@ -16,6 +19,11 @@ CREATE TABLE branches (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id),
     name TEXT NOT NULL,
+    description TEXT,
+    avatar_url TEXT,
+    banner_url TEXT,
+    location_primary TEXT,
+    location_secondary TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     deleted_at TIMESTAMPTZ DEFAULT NULL,
@@ -58,6 +66,7 @@ CREATE TABLE staff_profiles ( -- Staff's specific profiles for RBAC at tenant le
     tenant_id UUID NOT NULL REFERENCES tenants(id),
     avatar_url TEXT DEFAULT NULL,
     pin_code TEXT,
+    superadmin BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     deleted_at TIMESTAMPTZ DEFAULT NULL
@@ -70,6 +79,7 @@ CREATE TABLE system_profiles ( -- System-wide profiles
     name TEXT NOT NULL,
     user_id UUID NOT NULL REFERENCES users(id),
     avatar_url TEXT DEFAULT NULL,
+    superadmin BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     deleted_at TIMESTAMPTZ DEFAULT NULL

@@ -10,7 +10,7 @@ pub async fn find_by_id(
     sqlx::query_as!(
         Tenant,
         r#"
-SELECT id, name, slug, created_at, updated_at, deleted_at FROM tenants
+SELECT id, name, slug, description, avatar_url, banner_url, created_at, updated_at, deleted_at FROM tenants
 WHERE deleted_at IS NULL AND id = $1
 LIMIT 1
         "#,
@@ -27,7 +27,7 @@ pub async fn find_by_slug(
     sqlx::query_as!(
         Tenant,
         r#"
-SELECT id, name, slug, created_at, updated_at, deleted_at FROM tenants
+SELECT id, name, slug, description, avatar_url, banner_url, created_at, updated_at, deleted_at FROM tenants
 WHERE deleted_at IS NULL AND LOWER(slug) = LOWER($1)
 LIMIT 1
         "#,
@@ -44,7 +44,7 @@ pub async fn get_branches(
     sqlx::query_as!(
         Branch,
         r#"
-        SELECT id, tenant_id, name, created_at, updated_at, deleted_at
+        SELECT id, tenant_id, name, avatar_url, banner_url, description, location_primary, location_secondary, created_at, updated_at, deleted_at
         FROM branches
         WHERE tenant_id = $1 AND deleted_at IS NULL"#,
         tenant_id
@@ -79,7 +79,7 @@ pub async fn get_staff_tenants(
     sqlx::query_as!(
         Tenant,
         r#"
-    SELECT t.id, t.name, t.slug, t.created_at, t.updated_at, t.deleted_at
+    SELECT t.id, t.name, t.slug, t.description, t.avatar_url, t.banner_url, t.created_at, t.updated_at, t.deleted_at
     FROM tenants t
     INNER JOIN staff_profiles sp ON sp.tenant_id = t.id
     WHERE sp.user_id = $1 AND t.deleted_at IS NULL AND sp.deleted_at IS NULL
@@ -104,7 +104,7 @@ pub async fn insert_tenant(
         Tenant,
         r#"
         INSERT INTO tenants (name, slug) VALUES ($1, $2)
-        RETURNING id, name, slug, created_at, updated_at, deleted_at
+        RETURNING id, name, slug, avatar_url, banner_url, description, created_at, updated_at, deleted_at
         "#,
         name,
         slug,

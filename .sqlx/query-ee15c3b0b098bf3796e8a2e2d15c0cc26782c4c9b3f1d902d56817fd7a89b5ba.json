@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, tenant_id, name, created_at, updated_at, deleted_at\n        FROM branches\n        WHERE tenant_id = $1 AND deleted_at IS NULL",
+  "query": "\n        SELECT id, tenant_id, branch_id, name, statements AS \"statements: Json<PolicyDocument>\", created_at, updated_at, deleted_at\n        FROM policies\n        WHERE tenant_id = $1 AND (branch_id = $2 OR branch_id IS NULL)\n        OFFSET $3\n        LIMIT $4\n        ",
   "describe": {
     "columns": [
       {
@@ -9,7 +9,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "branches",
+            "table": "policies",
             "name": "id"
           }
         }
@@ -20,51 +20,73 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "branches",
+            "table": "policies",
             "name": "tenant_id"
           }
         }
       },
       {
         "ordinal": 2,
-        "name": "name",
-        "type_info": "Text",
+        "name": "branch_id",
+        "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "branches",
-            "name": "name"
+            "table": "policies",
+            "name": "branch_id"
           }
         }
       },
       {
         "ordinal": 3,
-        "name": "created_at",
-        "type_info": "Timestamptz",
+        "name": "name",
+        "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "branches",
-            "name": "created_at"
+            "table": "policies",
+            "name": "name"
           }
         }
       },
       {
         "ordinal": 4,
-        "name": "updated_at",
-        "type_info": "Timestamptz",
+        "name": "statements: Json<PolicyDocument>",
+        "type_info": "Jsonb",
         "origin": {
           "Table": {
-            "table": "branches",
-            "name": "updated_at"
+            "table": "policies",
+            "name": "statements"
           }
         }
       },
       {
         "ordinal": 5,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "policies",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "policies",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "branches",
+            "table": "policies",
             "name": "deleted_at"
           }
         }
@@ -72,11 +94,16 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "Uuid",
+        "Uuid",
+        "Int8",
+        "Int8"
       ]
     },
     "nullable": [
       false,
+      true,
+      true,
       false,
       false,
       false,
@@ -84,5 +111,5 @@
       true
     ]
   },
-  "hash": "ef56fac9675b8ffd219e3eaa1c3e295a476d080fb30a4d16fde4e427ad67c51c"
+  "hash": "ee15c3b0b098bf3796e8a2e2d15c0cc26782c4c9b3f1d902d56817fd7a89b5ba"
 }

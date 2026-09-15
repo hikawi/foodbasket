@@ -10,6 +10,7 @@ struct StaffProfileRow {
     pub name: String,
     pub user_id: Uuid,
     pub tenant_id: Uuid,
+    pub superadmin: bool,
     pub pin_code: Option<String>,
     pub avatar_url: Option<String>,
     pub created_at: DateTime<Utc>,
@@ -25,6 +26,7 @@ impl From<StaffProfileRow> for StaffProfile {
             name: value.name,
             user_id: value.user_id,
             tenant_id: value.tenant_id,
+            superadmin: value.superadmin,
             avatar_url: value.avatar_url,
             pin_code: value.pin_code,
             created_at: value.created_at,
@@ -62,7 +64,7 @@ pub async fn find_staff(
     sqlx::query_as!(
         StaffProfile,
         r#"
-        SELECT id, name, user_id, tenant_id, avatar_url, pin_code, created_at, updated_at, deleted_at
+        SELECT id, name, user_id, tenant_id, superadmin, avatar_url, pin_code, created_at, updated_at, deleted_at
         FROM staff_profiles
         WHERE user_id = $1 AND tenant_id = $2 AND deleted_at IS NULL
         LIMIT 1
@@ -151,7 +153,7 @@ pub async fn find_system(
     sqlx::query_as!(
         SystemProfile,
         r#"
-        SELECT id, name, user_id, avatar_url, created_at, updated_at, deleted_at
+        SELECT id, name, user_id, superadmin, avatar_url, created_at, updated_at, deleted_at
         FROM system_profiles
         WHERE user_id = $1 AND deleted_at IS NULL
         LIMIT 1

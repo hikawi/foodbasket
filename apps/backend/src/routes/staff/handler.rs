@@ -42,7 +42,7 @@ pub async fn get_staff(
     Extension(ctx): Extension<Arc<RequestContext>>,
     query: Result<Query<PaginationQuery>, QueryRejection>,
 ) -> Result<Json<PaginatedResponse<StaffProfileDTO>>, AppError> {
-    if !ctx.has_permission(permissions::pos::staff::READ) {
+    if !ctx.has_permission(permissions::POS_STAFF_READ) {
         Err(StaffError::Unauthorized("Unauthorized".into()))?;
     }
 

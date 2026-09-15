@@ -19,6 +19,7 @@ pub fn main_routes(state: AppState) -> Router<AppState> {
         .nest("/tenants", tenants::routes())
         .nest("/staff", staff::routes())
         .nest("/sse", sse::routes())
+        .nest("/policies", policies::routes())
         .layer(middleware::from_fn_with_state(
             state.clone(),
             middlewares::context_solidify,

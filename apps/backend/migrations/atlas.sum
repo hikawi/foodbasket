@@ -1,4 +1,5 @@
-h1:MLyAg9/B944o5vmrADMDDeWRSvkcJUyiQeO7/rxM1FA=
+h1:W69VJkx1BI+7Bh1tPCG9NdSGgSc3a74wRfl6WAWc5lg=
 20260313023822_init_rbac.sql h1:dndz3/8ZNER3w/ez0OR+jrpGHn0ejD3BExY3MUuSPJE=
 20260314094505_init_staff_groups.sql h1:IRwBfPKFIw2hVrN/SiRsfyZm19oXLMAbKcEoE8T3EAI=
 20260315090837_alter_profiles_names.sql h1:eAHjrbf/1bzKeJqJpN4Qmj8BsVlziMaOPBzBit1MOls=
+20260905124015_add_superadmin.sql h1:gHHcpuGNwndu3MBueNoLFNg9p4oD6g8tk7JppPWCwyo=

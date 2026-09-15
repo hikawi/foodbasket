@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, name, user_id, avatar_url, created_at, updated_at, deleted_at\n        FROM system_profiles\n        WHERE user_id = $1 AND deleted_at IS NULL\n        LIMIT 1\n        ",
+  "query": "\n        SELECT id, name, user_id, tenant_id, superadmin, avatar_url, pin_code, created_at, updated_at, deleted_at\n        FROM staff_profiles\n        WHERE user_id = $1 AND tenant_id = $2 AND deleted_at IS NULL\n        LIMIT 1\n        ",
   "describe": {
     "columns": [
       {
@@ -9,7 +9,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "system_profiles",
+            "table": "staff_profiles",
             "name": "id"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "system_profiles",
+            "table": "staff_profiles",
             "name": "name"
           }
         }
@@ -31,51 +31,84 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "system_profiles",
+            "table": "staff_profiles",
             "name": "user_id"
           }
         }
       },
       {
         "ordinal": 3,
-        "name": "avatar_url",
-        "type_info": "Text",
+        "name": "tenant_id",
+        "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "system_profiles",
-            "name": "avatar_url"
+            "table": "staff_profiles",
+            "name": "tenant_id"
           }
         }
       },
       {
         "ordinal": 4,
-        "name": "created_at",
-        "type_info": "Timestamptz",
+        "name": "superadmin",
+        "type_info": "Bool",
         "origin": {
           "Table": {
-            "table": "system_profiles",
-            "name": "created_at"
+            "table": "staff_profiles",
+            "name": "superadmin"
           }
         }
       },
       {
         "ordinal": 5,
-        "name": "updated_at",
-        "type_info": "Timestamptz",
+        "name": "avatar_url",
+        "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "system_profiles",
-            "name": "updated_at"
+            "table": "staff_profiles",
+            "name": "avatar_url"
           }
         }
       },
       {
         "ordinal": 6,
+        "name": "pin_code",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "staff_profiles",
+            "name": "pin_code"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "staff_profiles",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "staff_profiles",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "system_profiles",
+            "table": "staff_profiles",
             "name": "deleted_at"
           }
         }
@@ -83,6 +116,7 @@
     ],
     "parameters": {
       "Left": [
+        "Uuid",
         "Uuid"
       ]
     },
@@ -90,11 +124,14 @@
       false,
       false,
       false,
+      false,
+      false,
+      true,
       true,
       false,
       false,
       true
     ]
   },
-  "hash": "0135cb1066645a95679353ebf1888415d327d62f0700b5ee3c2720c2f568418c"
+  "hash": "d700f58911c90626fe78b318063f135c02ca68a66a82c949cf30ddcae10c2b28"
 }

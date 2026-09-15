@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, name, user_id, tenant_id, avatar_url, pin_code, created_at, updated_at, deleted_at\n        FROM staff_profiles\n        WHERE user_id = $1 AND tenant_id = $2 AND deleted_at IS NULL\n        LIMIT 1\n        ",
+  "query": "\n        SELECT id, tenant_id, name, avatar_url, banner_url, description, location_primary, location_secondary, created_at, updated_at, deleted_at\n        FROM branches\n        WHERE tenant_id = $1 AND deleted_at IS NULL",
   "describe": {
     "columns": [
       {
@@ -9,95 +9,117 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "staff_profiles",
+            "table": "branches",
             "name": "id"
           }
         }
       },
       {
         "ordinal": 1,
-        "name": "name",
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "staff_profiles",
-            "name": "name"
-          }
-        }
-      },
-      {
-        "ordinal": 2,
-        "name": "user_id",
-        "type_info": "Uuid",
-        "origin": {
-          "Table": {
-            "table": "staff_profiles",
-            "name": "user_id"
-          }
-        }
-      },
-      {
-        "ordinal": 3,
         "name": "tenant_id",
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "staff_profiles",
+            "table": "branches",
             "name": "tenant_id"
           }
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "branches",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
         "name": "avatar_url",
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "staff_profiles",
+            "table": "branches",
             "name": "avatar_url"
           }
         }
       },
       {
-        "ordinal": 5,
-        "name": "pin_code",
+        "ordinal": 4,
+        "name": "banner_url",
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "staff_profiles",
-            "name": "pin_code"
+            "table": "branches",
+            "name": "banner_url"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "description",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "branches",
+            "name": "description"
           }
         }
       },
       {
         "ordinal": 6,
-        "name": "created_at",
-        "type_info": "Timestamptz",
+        "name": "location_primary",
+        "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "staff_profiles",
-            "name": "created_at"
+            "table": "branches",
+            "name": "location_primary"
           }
         }
       },
       {
         "ordinal": 7,
-        "name": "updated_at",
-        "type_info": "Timestamptz",
+        "name": "location_secondary",
+        "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "staff_profiles",
-            "name": "updated_at"
+            "table": "branches",
+            "name": "location_secondary"
           }
         }
       },
       {
         "ordinal": 8,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "branches",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "branches",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
         "name": "deleted_at",
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "staff_profiles",
+            "table": "branches",
             "name": "deleted_at"
           }
         }
@@ -105,7 +127,6 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid",
         "Uuid"
       ]
     },
@@ -113,7 +134,9 @@
       false,
       false,
       false,
-      false,
+      true,
+      true,
+      true,
       true,
       true,
       false,
@@ -121,5 +144,5 @@
       true
     ]
   },
-  "hash": "38ca06b69839b42ff047362c9d7f28e3abb00c025ad93e16bc2aba27d1c9ac71"
+  "hash": "3505569ea0b0947d6ca11f21de9ab33138282424bb730e72b4c8f3305e4a1b01"
 }

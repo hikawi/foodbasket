@@ -1,6 +1,7 @@
 use axum::{
     Router,
     extract::rejection::{JsonRejection, QueryRejection},
+    routing::get,
 };
 use http::StatusCode;
 use validator::ValidationErrors;
@@ -64,5 +65,5 @@ impl From<ValidationErrors> for PolicyError {
 }
 
 pub fn routes() -> Router<AppState> {
-    Router::new()
+    Router::new().route("/", get(handler::get_policies))
 }

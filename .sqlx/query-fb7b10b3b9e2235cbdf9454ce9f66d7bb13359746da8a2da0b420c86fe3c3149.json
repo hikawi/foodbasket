@@ -104,6 +104,17 @@
       },
       {
         "ordinal": 9,
+        "name": "superadmin",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "staff_profiles",
+            "name": "superadmin"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
         "name": "total_count!",
         "type_info": "Int8",
         "origin": "Expression"
@@ -126,6 +137,7 @@
       false,
       false,
       true,
+      false,
       false,
       null
     ]
