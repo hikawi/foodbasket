@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT count(p.*)\n        FROM policies p\n        WHERE tenant_id = $1 AND (branch_id = $2 OR branch_id IS NULL)\n        ",
+  "query": "\n        SELECT count(p.*)\n        FROM policies p\n        WHERE tenant_id = $1 AND ($2::uuid IS NULL OR branch_id = $2 OR branch_id IS NULL)\n        ",
   "describe": {
     "columns": [
       {
@@ -20,5 +20,5 @@
       null
     ]
   },
-  "hash": "afef4d317f5718a12674b37330afb8f0b74a59e7484489439d2e744e61e9eee3"
+  "hash": "875137e9a89bec1e7af7d5d7cb94a71438f255d03bf619cf7bf92c8634275461"
 }

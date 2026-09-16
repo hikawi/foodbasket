@@ -296,6 +296,7 @@ pub async fn policy_hydrate(
 }
 
 /// Just a final layer that compacts everything into one object for handlers to handle easily.
+#[allow(clippy::too_many_arguments)]
 pub async fn context_solidify(
     Extension(app_ctx): Extension<AppContext>,
     Extension(origin_ctx): Extension<TenantContext>,

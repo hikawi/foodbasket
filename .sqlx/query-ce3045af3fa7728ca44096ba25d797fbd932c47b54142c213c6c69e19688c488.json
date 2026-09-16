@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, tenant_id, branch_id, name, statements AS \"statements: Json<PolicyDocument>\", created_at, updated_at, deleted_at\n        FROM policies\n        WHERE tenant_id = $1 AND (branch_id = $2 OR branch_id IS NULL)\n        OFFSET $3\n        LIMIT $4\n        ",
+  "query": "\n        SELECT id, tenant_id, branch_id, name, statements AS \"statements: Json<PolicyDocument>\", created_at, updated_at, deleted_at\n        FROM policies\n        WHERE tenant_id = $1 AND (branch_id IS NULL OR $2::uuid IS NULL OR branch_id = $2)\n        OFFSET $3\n        LIMIT $4\n        ",
   "describe": {
     "columns": [
       {
@@ -111,5 +111,5 @@
       true
     ]
   },
-  "hash": "ee15c3b0b098bf3796e8a2e2d15c0cc26782c4c9b3f1d902d56817fd7a89b5ba"
+  "hash": "ce3045af3fa7728ca44096ba25d797fbd932c47b54142c213c6c69e19688c488"
 }

@@ -61,7 +61,7 @@ pub async fn sse_handler(
                 TenantContext::Admin => "admin".into(),
                 TenantContext::Tenant(uuid) => uuid.to_string(),
             };
-            if &tenant_id != &event.target.tenant_id {
+            if tenant_id != event.target.tenant_id {
                 return None;
             }
 
@@ -72,10 +72,10 @@ pub async fn sse_handler(
             // (Some, Some) => if a != b
             let current_branch = stream_ctx.branch.0.map(|u| u.to_string());
             let target_branch = &event.target.branch_id;
-            if let (Some(b), Some(t)) = (&current_branch, target_branch) {
-                if b != t {
-                    return None;
-                }
+            if let (Some(b), Some(t)) = (&current_branch, target_branch)
+                && b != t
+            {
+                return None;
             }
 
             // Check for app context matches.
@@ -96,10 +96,11 @@ pub async fn sse_handler(
             }
 
             // Can't see if no permissions. Most time-consuming check.
-            if let Some(perm) = &event.target.permission_matcher {
-                if !stream_ctx.has_permission(perm) {
-                    return None;
-                }
+            // Though it's probably still seconds ahead of using an actual cache.
+            if let Some(perm) = &event.target.permission_matcher
+                && !stream_ctx.has_permission(perm)
+            {
+                return None;
             }
 
             let json = serde_json::to_string(&event).ok()?;

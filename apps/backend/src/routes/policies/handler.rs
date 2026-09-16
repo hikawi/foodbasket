@@ -58,7 +58,7 @@ pub async fn get_policies(
     let branch_id = ctx.branch.0;
 
     let (policies, total) = policy_service
-        .get_policies(tenant_id, branch_id.as_ref(), query.page, query.per_page)
+        .get_tenant_policies(tenant_id, branch_id.as_ref(), query.page, query.per_page)
         .await
         .map_err(|_| PolicyError::Internal("Database error".into()))?;
 

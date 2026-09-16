@@ -169,7 +169,7 @@ pub async fn count_tenant_policies(
         r#"
         SELECT count(p.*)
         FROM policies p
-        WHERE tenant_id = $1 AND (branch_id = $2 OR branch_id IS NULL)
+        WHERE tenant_id = $1 AND ($2::uuid IS NULL OR branch_id = $2 OR branch_id IS NULL)
         "#,
         tenant_id,
         branch_id,
@@ -179,6 +179,11 @@ pub async fn count_tenant_policies(
 }
 
 /// Retrieves policies bound to a tenant.
+///
+/// `tenant_id` is forced to be specified. If `branch_id` is None, then it shall
+/// read ALL policies for that tenant.
+/// If `branch_id` is Some, then it shall read ONLY policies for THAT branch AND
+/// ONLY policies that are marked deliberately to be tenant scoped.
 pub async fn get_tenant_policies(
     executor: impl PgExecutor<'_>,
     tenant_id: &Uuid,
@@ -191,7 +196,7 @@ pub async fn get_tenant_policies(
         r#"
         SELECT id, tenant_id, branch_id, name, statements AS "statements: Json<PolicyDocument>", created_at, updated_at, deleted_at
         FROM policies
-        WHERE tenant_id = $1 AND (branch_id = $2 OR branch_id IS NULL)
+        WHERE tenant_id = $1 AND (branch_id IS NULL OR $2::uuid IS NULL OR branch_id = $2)
         OFFSET $3
         LIMIT $4
         "#,
@@ -204,6 +209,10 @@ pub async fn get_tenant_policies(
     .await
 }
 
+/// Creates a policy.
+///
+/// If `tenant_id` is not specified, it's a system policy.
+/// If `branch_id` is not specified, it's a tenant-wide policy.
 pub async fn insert_policy(
     executor: impl PgExecutor<'_>,
     tenant_id: Option<&Uuid>,
